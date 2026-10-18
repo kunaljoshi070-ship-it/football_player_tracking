@@ -1,50 +1,35 @@
 # CSAI3027P Deep Learning PBL — Project 36
 
-**Working title:** Soccer Player Detection, Tracking, and Trajectory-Based Analysis  
-**Language:** Python  
-**Current stage:** Phase I setup and proposal; Phase II is out of scope for now.
+**Project:** Sports Player Tracking and Tactical Event Analyzer
+**Language:** Python (professor-approved)
+**Current phase:** Phase I only
 
-This repository is the shared project record for planning, code, experiments, review, and handoffs across ChatGPT, Claude, Gemini, and the independent reviewer. Keep data, video, model weights, and secrets out of Git.
+## Phase I scope
 
-## Phase I goal
+Use a small, fixed subset of soccer video to build one player-detection baseline and, if matching tracking labels are available, visualize short player trajectories. Compare a simple tracker with independent frame detections. Keep the result descriptive; do not claim player identity or full tactical understanding.
 
-Build a feasible baseline that detects people/players in a small, fixed set of soccer video clips. If permitted video and compatible tracking annotations are available, add a simple tracker and visualize image-plane trajectories. Test whether a lightweight temporal association/smoothing step improves trajectory continuity over frame-by-frame detections on the selected clips. Report detection and tracking metrics separately and state the limitations of image-plane tactical summaries.
+The selected dataset is **SoccerTrack v2, release v1.2**, using only a few clips from its annotated MOT subset. See [`docs/dataset_card.md`](docs/dataset_card.md) before accessing data. The full release is large; download only files needed for the frozen sample. Raw video, frames, model weights, and secrets stay out of Git.
 
-The experiment plan defines the measurable hypothesis and the proposal records current assumptions. Rubric alignment is provisional until the two authoritative course files are added and mapped.
+## Project files
 
-## Start here
+- [`AGENTS.md`](AGENTS.md): shared rules for any person or AI tool working on this repository.
+- [`docs/phase1_proposal.md`](docs/phase1_proposal.md): one-page proposal and experiment hypothesis.
+- [`docs/dataset_card.md`](docs/dataset_card.md): source, access, license, and sample plan.
+- [`data/manifest.csv`](data/manifest.csv): record only the selected dataset version, splits, clip IDs, and permitted metadata.
+- [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md): individual and prompt-wise contribution record required by the assignment.
 
-1. Read [`AGENTS.md`](AGENTS.md), [`docs/phase1_proposal.md`](docs/phase1_proposal.md), [`docs/dataset_card.md`](docs/dataset_card.md), and [`docs/experiment_plan.md`](docs/experiment_plan.md).
-2. Check [`docs/rubric_map.md`](docs/rubric_map.md) against the course DOCX and PDF; add them locally or to the team's approved private course-material location, not blindly to a public repository.
-3. Review [`data/README.md`](data/README.md) and [`data/manifest.csv`](data/manifest.csv) before obtaining any data.
-4. Create a Python environment and install `requirements.txt`. Record the Python/platform and library versions before experiments.
-5. Keep implementation in `src/`, exploratory work in `notebooks/`, configuration in `configs/`, and metrics/plots in `results/`.
+## Phase split
 
-## Data access and ethics
+The handout scores Phase I and Phase II at 50 marks each. Phase I focuses on problem framing, data audit/splits, a working baseline and initial metric, architecture/training explanation, reproducibility, and an experiment plan. Keep Phase I to one detector and a small tracking comparison. The compendium's additional segmentation, action/event, second-architecture, sequence-model, and VAE work is for Phase II unless the instructor directs otherwise.
 
-SoccerNet is the preferred candidate, subject to confirming that the course team can obtain the relevant tracking video and that the intended use complies with the current terms. The official tracking kit documents clips and annotation files; the official SoccerNet pages currently list raw tracking video as gated. Do not assume that public annotations imply public video access. See the dataset card for the verified status, access steps, citations, and fallback decision.
+The compendium names C/C++/Java generically, while the professor has permitted Python for this project. Keep the professor's approval available for the viva and report.
 
-## Repository layout
+## Minimal workflow
 
-```text
-AGENTS.md
-README.md
-CONTRIBUTIONS.md
-requirements.txt
-configs/phase1.yaml
-data/README.md
-data/manifest.csv
-docs/{phase1_proposal,dataset_card,experiment_plan,rubric_map}.md
-notebooks/README.md
-prompts/{chatgpt,claude,gemini,reviewer}.md
-results/README.md
-src/soccer_tracking/
-tests/                  # reserved for Phase I unit checks
-```
+1. Confirm access to the SoccerTrack v2 files and verify annotations match the selected videos.
+2. Freeze a small sample and split by match in `data/manifest.csv` before evaluating.
+3. Build the Python/PyTorch detector baseline and record its initial metric and training settings.
+4. Compare detections with a simple tracker on the same frames; report results and errors.
+5. Record each external source and every permitted generative-AI prompt in `CONTRIBUTIONS.md`.
 
-## Team workflow
-
-- Push design decisions and results to GitHub so all four AI roles and teammates work from the same version.
-- Use pull requests for code or document changes. Attach experiment configuration and evidence to result updates.
-- Use the role prompts in `prompts/`; adapt each task to a small, bounded issue.
-- Log meaningful contributions in [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md).
+Use regular ChatGPT Chat for quick planning and prompt drafting. Use this repository as the source of truth; manually pass Claude/Gemini only safe project context and review their output yourself. The assignment requires faculty permission for generative-AI use.

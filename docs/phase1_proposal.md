@@ -1,48 +1,15 @@
-# Phase I proposal
+# Phase I proposal — Project 36
 
-**Course:** CSAI3027P Deep Learning PBL  
-**Project:** 36 — Soccer player tracking and basic tactical analysis  
-**Status:** Draft pending course-reference review and dataset access confirmation.
+**Problem and user.** Football coaches and analysts need a repeatable way to review player movement from match footage. This project will evaluate a small Python pipeline that detects players in soccer clips and, when compatible labels are available, follows their trajectories.
 
-## Problem
+**Question and hypothesis.** On a fixed sample of annotated soccer clips, does adding a simple IoU tracker to a player detector improve trajectory continuity over frame-by-frame detections? The tracker should reduce fragmentation or identity switches while preserving frame-level detection quality. Final metrics and a numeric target will be selected after checking the labels, then fixed before evaluation.
 
-Manual analysis of soccer footage is time-consuming. This Phase I project will investigate a narrow computer-vision pipeline that detects people/players in a few fixed clips and, where ground-truth tracking data are available, associates detections across nearby frames to produce interpretable image-plane trajectories.
+**Method.** Use Python, PyTorch, and OpenCV, as permitted by the professor. Train or fine-tune one detector from the project brief's prescribed family, preferably RetinaNet with a ResNet-50 feature backbone, if the selected boxes and available compute support it. Compare detector-only output with simple IoU association on identical frames. Report precision, recall and AP for detection; use HOTA/DetA/AssA or clearly defined tracking measures when labels support them. Include learning curves, representative errors, runtime and limitations.
 
-## Aim and research question
+**Data.** Use SoccerTrack v2 v1.2, initially only a few short videos and their matching MOT boxes/IDs. Split by match, not by nearby frames. Record exact files and splits in `data/manifest.csv`. Review `docs/dataset_card.md` for access, license, download size, and dataset limitations before obtaining data.
 
-Can a lightweight temporal association step improve the continuity of player trajectories over a frame-by-frame detection baseline on a fixed, annotated sample of soccer footage, without reducing detection quality beyond a documented tolerance?
+**Scope.** Phase I covers the data audit, player-detection baseline, initial training evidence, a small controlled tracking comparison and reproducibility. Ball detection, field segmentation, action classification, a second deep architecture, sequence model, VAE and finished app are deferred to Phase II unless the instructor changes the boundary. Trajectories are image-plane observations unless calibrated; do not infer player identities or tactical intent.
 
-## Proposed method
+**Reproducibility and risks.** Verify that the selected MOT clips have aligned video and labels and allow a match-separated evaluation. If not, ask the instructor before changing datasets or splitting frames. Record dataset release/license, clip and split IDs, preprocessing, seed, model/weight source, loss, optimizer, learning rate, batch size, epochs, hardware, software versions, commands, git revision, metrics and error cases. Keep raw video, crops, weights and credentials out of Git and external AI services.
 
-Use a pretrained person detector as the reference baseline, then evaluate one simple tracker (e.g. IoU/position-based association with a short lost-track buffer). Fine-tuning a detector is conditional on having a suitable labeled training subset, compute, and rubric support. Keep train/validation/test clips separated by match or source sequence where possible to reduce leakage. Visualize bounding boxes and short image-plane trajectories. Any tactical summary is limited to transparent descriptive quantities such as observed movement paths or coarse spatial occupancy; no player identity, pitch coordinates, or tactical causation claims without the data and calibration to support them.
-
-## Scope and feasibility limits
-
-- Soccer only; one fixed camera/view type where possible.
-- A small, predeclared subset of clips and frame sampling rate; final counts are set after verifying data access and annotation alignment.
-- Player/person detection is the minimum deliverable. Tracking visualization is conditional on video rights and compatible annotations.
-- No ball tracking, jersey-number recognition, cross-camera re-identification, automatic formations, event recognition, or live deployment in Phase I.
-- Do not redistribute source video or model weights.
-
-## Proposed innovation hypothesis
-
-**H1:** On the same fixed clips and detector outputs, short-window IoU/position-based temporal association will reduce identity switches or track fragmentation relative to treating detections as independent frame outputs, while keeping detection precision/recall within a predeclared tolerance (suggested: no more than 2 percentage points on the same sampled frames). This is a modest, testable systems hypothesis; it is not a claim of a novel tracking algorithm.
-
-## Evaluation
-
-Detection: precision, recall, and AP/mAP at a stated IoU threshold if labels and evaluator support it. Tracking: HOTA with DetA/AssA when the official-format annotations and compatible evaluator can be used; otherwise report clearly defined ID switches, fragmentation, and track coverage with the limitations. Also report runtime per frame on specified hardware as a descriptive measure. Compare framewise detections to the temporal association output on identical frames. Report clip-level results and aggregate summary; do not tune on held-out evaluation clips.
-
-## Learning and reproducibility
-
-Explain the selected detector's neural-network components and learning/inference pipeline at a level mapped to the rubric. Record model/version, weights source and license, input resolution, thresholds, tracker parameters, sample IDs, split, seeds, environment, hardware, exact commands, and evaluation code. Include at least one controlled comparison and discuss failure cases such as occlusion, camera motion, similar uniforms, and crowded scenes.
-
-## Phase I deliverables
-
-1. Approved proposal and exact rubric mapping.
-2. Dataset manifest and access/rights decision.
-3. Reproducible baseline run on the fixed clip sample.
-4. Comparative experiment for H1 and error analysis.
-5. Trajectory visualization where allowed and supported.
-6. Short report/demo with measured results, limitations, and contribution log.
-
-Phase II is intentionally not specified as implementation work here; only the course-approved phase boundary should determine its later scope.
+**Phase I evidence.** Approved one-page proposal; dataset card and leakage-safe manifest; working baseline with initial metric; architecture/tensor-flow explanation; learning curves; controlled comparison; error analysis; reproducible instructions; individual contribution log; and timestamped `Phase_I` snapshot.

@@ -1,45 +1,51 @@
-# Dataset card — SoccerNet Tracking (candidate)
+# Dataset card — SoccerTrack v2
 
-**Decision:** Preferred candidate, but conditional. Do not begin a video-based experiment until the team has confirmed access, terms, annotation/video alignment, and suitability for the course.
+**Recommendation:** Primary candidate for this soccer-only project, subject to instructor acceptance, per-file access review, and a feasible partial download.
+**Release checked:** 2026-10-18; Hugging Face card reports v1.2.
+**Total listed size:** 145 GB; do not download the full release for Phase I.
 
-## What it contains
+## Why it fits
 
-The official SoccerNet tracking task describes 100 main-camera clips of 30 seconds at 1080p across its 2022/2023 challenge data, with tracking annotations, and distinguishes association using ground-truth detections from full tracking using raw video. The development-kit README also documents downloadable tracking CSVs and a larger collection. Confirm the exact release/split and counts against the chosen kit version before freezing the sample.
+The dataset describes ten university-level soccer matches filmed with fixed panoramic cameras, with per-frame game-state annotations, persistent track IDs, player roles/teams, ball-action spotting labels, and a curated MOT bounding-box subset. This supports a feasible Phase I player-detection/tracking baseline and may support later sequence/action analysis. Its fixed full-pitch view also enables descriptive movement maps more directly than moving broadcast cameras, once coordinate conventions are validated.
 
-## Access status checked 2026-10-18
+## Components to request/use
 
-- Official tracking annotations/dev-kit data are described as downloadable through the `SoccerNet` Python package and its task downloader. The older tracking README gives `downloadDataTask(task="tracking", split=[...])` and `task="tracking-2023"` examples.
-- The official SoccerNet Hugging Face organization currently lists `SoccerNet-Tracking-RAW-Video` as a **gated** repository. The official SoccerNet site says game videos are copyrighted and require an NDA to prevent redistribution. The official organization describes an account request, NDA acknowledgement, and manual approval flow for gated content.
-- Therefore SoccerNet is not an unconditional primary video dataset. If access is unavailable or approval takes too long, use only an instructor-approved, legally accessible alternative with compatible annotations; do not replace the video with an unlicensed broadcast download.
-- Verify whether the relevant annotation repository has separate access conditions and license before using it. Keep data files and credentials local; record only permitted metadata in Git.
+- **Phase I minimum:** a small, selectively downloaded set of video clips and corresponding MOT bounding-box/identity annotations for player detection/tracking.
+- **Optional later Phase II:** game-state (GSR) annotations for pitch-coordinate trajectories and ball-action (BAS) labels for a sequence/event model.
+- Do not treat the interpolated ball track as dense ground truth: the dataset card says it is reconstructed from event anchors and straight constant-speed interpolation. It is unsuitable as an unbiased framewise ball-detection evaluation target without a separate audit.
+- The public data card describes a match-level train/validation/test split. Match IDs and assignments are in the upstream card; mirror them in the project manifest and keep matches separate to prevent frame leakage.
 
-## Access workflow
+## Access, license and privacy checked 2026-10-18
 
-1. Visit the official SoccerNet tracking task page and development kit linked below.
-2. Identify the exact tracking edition/split needed for the proposed sample.
-3. Request access to the relevant tracking raw-video repository on Hugging Face; complete its current terms/NDA and wait for approval if requested.
-4. Obtain annotations through the official downloader or approved repository and video through the currently authorized official route.
-5. Verify file correspondence, frame rate/resolution, annotation format, and permitted academic use. Record date, version, split, clip identifiers, and checksums in the local manifest.
-6. Never commit or share gated video, redistributed copies, access tokens, or model weights derived from restricted assets.
+- Official dataset card: [Hugging Face SoccerTrack v2](https://huggingface.co/datasets/atomscott/soccertrack-v2). It says access requires agreeing to share contact information, labels the data CC BY 4.0, and reports 145 GB total.
+- Project maintainers' [GitHub repository](https://github.com/AtomScott/SoccerTrack-v2) separates MIT-licensed code from CC BY 4.0 dataset video/annotations. The data license requires attribution; retain citation and attribution with all derived reports and outputs.
+- Confirm the exact conditions displayed on Hugging Face and in `LICENSE-DATA` at download time. Do not infer consent to public redistribution of personal information or unrelated data from the dataset license. The upstream page says player names are omitted and describes participants as amateur players with informed consent.
+- A private course repository is sensible but does not replace the dataset terms. Keep videos/frames local and ignored. Never upload video, person crops, or credentials to Claude/Gemini/ChatGPT unless the instructor and applicable dataset terms explicitly permit it.
 
-## Proposed sample protocol
+## Download plan
 
-After access is confirmed, select a small fixed sample (initial target: 3–5 clips, 30 seconds each) spanning ordinary play and at least one moderately crowded/occluded sequence. Freeze clip IDs before evaluating. Sample at a documented fixed rate for computational feasibility; preserve the official frame mapping. Use match/sequence-separated splits if sufficient clips exist. This is a proposal, not a claim that the selected clips are already accessible.
+1. Open the Hugging Face dataset card and review/accept the current access condition.
+2. Inspect the release's file tree and `LICENSE-DATA`; record the version tag (currently v1.2) and upstream split.
+3. Download only selected match files and corresponding annotation files using the official project scripts or selective Hugging Face download. Test selection on one small clip before obtaining more. The upstream GitHub repo documents a `scripts/download.sh` helper and a match filter; confirm its current interface before running it.
+4. Extract/convert only to an ignored local `data/raw/` or `data/processed/` path. Do not commit the dataset or derived frames.
+5. Verify frame numbering, fps, annotation mapping, bbox convention, match-level split and checksum. Record only non-sensitive identifiers, URLs, access date, version, split, checksums and local ignored paths in `data/manifest.csv`.
 
-## Fields and limitations
+## Phase I sample proposal
 
-The official kit describes MOT-style CSVs with frame ID, track ID, bounding-box coordinates, dimensions, confidence, and placeholder fields. Tracking classes include players, goalkeepers, referees, staff, and ball; the benchmark may not evaluate object class. Decide whether this project evaluates all annotated objects or filters to player categories, and document that choice. Broadcast camera movement, occlusion, scale changes, and visually similar uniforms limit image-plane tactical interpretation.
+Select 3–5 short clips from the available annotated MOT subset after confirming it is downloadable and has both video and usable ground truth. Use whole matches for train/validation/test separation; do not randomly split nearby frames. A practical initial target is 1–2 training matches, 1 validation match, and 1 held-out evaluation match if the MOT annotation subset supports that split. Otherwise disclose the constraint and obtain instructor approval for a small, clearly labeled evaluation sample. Freeze clip/frame IDs before final metrics.
 
-## License and citation
+## Risks and limitations
 
-Video is copyrighted by the relevant rights holders; SoccerNet says the data is research-focused and not for commercial use. A repository's code license does not grant a license to the videos. Review the current terms/NDA and annotation repository license directly before use. Cite the dataset paper:
+- The full download is large; confirm selective-download behavior and disk space before retrieving data.
+- The MOT bounding-box subset may not cover every match/split or contain ball boxes; verify the actual files. Use player-only Phase I scope if so.
+- Fixed panoramic cameras differ from broadcast views. Claims should be limited to this camera setup.
+- Action labels are events, not per-frame action classes; sequence labeling needs careful time-window construction and is later-phase work.
+- The dataset does not supply all of the compendium's requested field segmentation masks or every desired model task. Do not silently imply that it does. If Phase II requires field masks, add a separate specifically licensed field-segmentation source or annotate a small approved sample yourself.
 
-Cioppa et al., “SoccerNet-Tracking: Multiple Object Tracking Dataset and Benchmark in Soccer Videos,” CVPR Workshops 2022, pp. 3491–3502.
+## Citation
 
-## Official references
+Scott et al., *SoccerTrack v2: A Full-Pitch Panoramic Video Dataset for Game State Reconstruction and Ball Action Spotting*, arXiv:2508.01802 (2025). Use the latest BibTeX and attribution wording from the dataset card at submission time.
 
-- [SoccerNet Tracking task](https://www.soccer-net.org/tasks/tracking)
-- [Official SoccerNet tracking development kit](https://github.com/SoccerNet/sn-tracking)
-- [Official SoccerNet FAQ](https://www.soccer-net.org/faq)
-- [Official SoccerNet Hugging Face organization and dataset access guide](https://huggingface.co/SoccerNet)
-- [SoccerNet-Tracking paper](https://openaccess.thecvf.com/content/CVPR2022W/CVSports/papers/Cioppa_SoccerNet-Tracking_Multiple_Object_Tracking_Dataset_and_Benchmark_in_Soccer_Videos_CVPRW_2022_paper.pdf)
+## Secondary candidate
+
+[SoccerNet Tracking](https://github.com/SoccerNet/sn-tracking) is a strong alternative for broadcast-view player tracking. Its official raw tracking video is gated and needs an approved Hugging Face access request/NDA; annotations and video access must be verified separately. The FAQ states the videos are copyrighted and research-focused. Prefer it if your proposal specifically needs broadcast soccer, but do not assume it is immediately downloadable or redistributable.

@@ -6,6 +6,3 @@ numpy
 pandas
 matplotlib
 PyYAML
-scikit-learn
-pytest
-# Optional tracking evaluation should be added only after selecting a compatible evaluator.
