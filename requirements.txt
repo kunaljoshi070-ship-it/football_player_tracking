@@ -1,0 +1,11 @@
+# Initial Python environment; pin exact resolved versions in the first reproducible run.
+torch
+torchvision
+opencv-python
+numpy
+pandas
+matplotlib
+PyYAML
+scikit-learn
+pytest
+# Optional tracking evaluation should be added only after selecting a compatible evaluator.

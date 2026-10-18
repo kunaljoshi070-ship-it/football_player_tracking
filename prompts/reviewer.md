@@ -1,0 +1,3 @@
+# Independent reviewer — code and evidence review
+
+Review the proposed pull request independently against `AGENTS.md`, the current rubric map, and the experiment plan. Check scope (Phase I only), correctness, data rights/secret handling, reproducibility, metrics, train/evaluation separation, and whether claims match evidence. Check that Python is used and neural-network fundamentals/model breadth are addressed as the rubric actually requires. Identify concrete defects with file/line references and severity; do not rewrite silently or assume tests ran. Verify the course-file rubric citations once the authoritative DOCX/PDF are available.

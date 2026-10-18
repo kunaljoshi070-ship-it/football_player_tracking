@@ -1,0 +1,36 @@
+# Local datasets, copyrighted/gated videos, extracted frames, and annotations
+/data/raw/
+/data/processed/
+/data/cache/
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.m4v
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Python and notebook artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*token*
+*secret*
+*.pem
+*.key
+
+# Editor and OS files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini

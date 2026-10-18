@@ -1,0 +1,2 @@
+dataset,edition,split,clip_id,source_url,access_date,local_path,annotation_path,license_or_terms,sha256,notes
+SoccerNet Tracking,TBD,TBD,TBD,https://github.com/SoccerNet/sn-tracking,TBD,data/raw/TBD,TBD,See docs/dataset_card.md,TBD,Placeholder; fill only after access and rights verification
