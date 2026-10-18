@@ -33,3 +33,26 @@ The compendium names C/C++/Java generically, while the professor has permitted P
 5. Record each external source and every permitted generative-AI prompt in `CONTRIBUTIONS.md`.
 
 Use regular ChatGPT Chat for quick planning and prompt drafting. Use this repository as the source of truth; manually pass Claude/Gemini only safe project context and review their output yourself. The assignment requires faculty permission for generative-AI use.
+
+## Data loading and visualization utility
+
+`src/soccer_tracking/mot.py` reads and validates MOT rows (`frame,id,x,y,width,height,...`; `(x, y)` is the box's top-left corner in pixels). `src/soccer_tracking/visualize.py` saves one video frame with its annotated boxes and track IDs. No new dependencies: it uses `opencv-python` and `numpy` from `requirements.txt`.
+
+Place the local files (git-ignored) at `data/raw/117092.mp4` and `data/raw/117092.txt`, then run from the repository root:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m soccer_tracking.visualize --video data/raw/117092.mp4 --annotations data/raw/117092.txt --frame 0
+# writes data/processed/117092_frame0.jpg (git-ignored); use --output to choose another path
+```
+
+**Frame numbering.** `--frame` is a **0-based video frame index** (OpenCV convention). The annotation frame looked up is `--frame + --annotation-base`. `--annotation-base` is `0` by default because `117092.txt` was observed to start at frame 0 (frames 0–5999, 22 boxes per frame); pass `1` for a 1-based MOT file. Nothing is shifted unless you ask, and the mapping used is printed on every run. By default OpenCV *seeks* to the frame, which can be imprecise for some codecs; add `--sequential` for slow but frame-exact decoding when checking alignment.
+
+Errors (missing file, malformed row with its line number, non-positive/non-finite box, duplicate `(frame, id)`, frame without annotations, frame beyond the video) exit with code 2 and a message. Boxes outside the image are clipped and reported.
+
+Tests use only synthetic data generated at test time:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m unittest discover -s tests -v
+```
