@@ -25,6 +25,11 @@ except ImportError:
 from soccer_tracking.train import lr_at
 
 
+def read_rows(path):
+    with open(path, newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
 class ScheduleTests(unittest.TestCase):
     def test_lr_schedule(self):
         self.assertAlmostEqual(lr_at(0, 1000, 0.01, 100), 0.01 / 100, places=6)       # warmup start
@@ -84,11 +89,11 @@ class TrainSmokeTests(unittest.TestCase):
         for name in ("metrics.csv", "iterations.csv", "last.pt", "best.pt", "summary.json"):
             self.assertTrue((run / name).is_file(), name)
         self.assertTrue(list(run.glob("config_*.json")))
-        self.assertEqual(len(list(csv.DictReader((run / "metrics.csv").open()))), 1)
+        self.assertEqual(len(read_rows(run / "metrics.csv")), 1)
         with redirect_stdout(io.StringIO()):
             self.assertEqual(train_main(self.args("--epochs", "1")), 2)                   # refuses a non-empty run dir
             self.assertEqual(train_main(self.args("--epochs", "2", "--resume", str(run / "last.pt"))), 0)
-        rows = list(csv.DictReader((run / "metrics.csv").open()))
+        rows = read_rows(run / "metrics.csv")
         self.assertEqual([r["epoch"] for r in rows], ["1", "2"])                           # continued, not restarted
         out = self.dir / "eval.json"
         with redirect_stdout(io.StringIO()):

@@ -65,6 +65,14 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _read_csv(path: Path) -> list:
+    """Rows of a CSV file as dicts ([] if the file does not exist); the file is always closed."""
+    if not path.is_file():
+        return []
+    with path.open("r", newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
 def _append_row(path: Path, cols: Sequence[str], row: dict) -> None:
     new = not path.is_file()
     with path.open("a", newline="", encoding="utf-8") as handle:
@@ -90,10 +98,7 @@ def plot_curves(out_dir: Path) -> Optional[Path]:
     except ImportError:
         print("matplotlib not installed: skipping curves.png (the CSV files have the data)")
         return None
-    def read(name):
-        path = out_dir / name
-        return list(csv.DictReader(path.open(encoding="utf-8"))) if path.is_file() else []
-    its, eps = read("iterations.csv"), read("metrics.csv")
+    its, eps = _read_csv(out_dir / "iterations.csv"), _read_csv(out_dir / "metrics.csv")
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
     if its:
         axes[0].plot([float(r["iteration"]) for r in its], [float(r["loss"]) for r in its], label="total")
@@ -186,15 +191,15 @@ def run(args: argparse.Namespace) -> dict:
                 losses = model(images, targets)
                 loss = sum(losses.values())
             if not torch.isfinite(loss):
-                raise RuntimeError(f"loss became {float(loss)} at iteration {iteration}; lower --lr or check the data")
+                raise RuntimeError(f"loss became {loss.item()} at iteration {iteration}; lower --lr or check the data")
             optimizer.zero_grad(set_to_none=True)
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(params, args.clip_grad)
             scaler.step(optimizer)
             scaler.update()
-            vals = {"loss": float(loss), "classification": float(losses["classification"]),
-                    "bbox_regression": float(losses["bbox_regression"])}
+            vals = {"loss": loss.item(), "classification": losses["classification"].item(),
+                    "bbox_regression": losses["bbox_regression"].item()}
             for k in sums:
                 sums[k] += vals[k]
             n += 1
@@ -228,7 +233,7 @@ def run(args: argparse.Namespace) -> dict:
             print(f"early stopping: no val AP50 improvement for {bad} epochs")
             break
 
-    rows = list(csv.DictReader((out_dir / "metrics.csv").open(encoding="utf-8")))
+    rows = _read_csv(out_dir / "metrics.csv")
     best_row = max(rows, key=lambda r: float(r["val_ap50"])) if rows else {}
     summary = {"best_epoch": int(best_row["epoch"]) if best_row else None, "best_val_ap50": best,
                "epochs_run": len(rows), "iterations": iteration, "run_dir": str(out_dir)}

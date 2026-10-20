@@ -6,7 +6,7 @@
     "split": "val",
     "allow_test": false,
     "weights": "coco",
-    "stride": 250,
+    "stride": 125,
     "tile": [
       1024,
       1080
@@ -26,39 +26,40 @@
   "clips": [
     {
       "clip_id": "117093",
-      "frames_evaluated": 24,
+      "frames_evaluated": 48,
       "tiles_per_frame": 5
     }
   ],
   "results": {
-    "images": 24,
-    "n_gt": 528,
-    "n_pred": 13248,
-    "ap50": 0.663686847307482,
-    "ap75": 0.463960391462225,
+    "images": 48,
+    "n_gt": 1056,
+    "n_pred": 26419,
+    "ap50": 0.6570505601967772,
+    "ap75": 0.46158487633599543,
     "report_score": 0.5,
     "iou_for_pr": 0.5,
-    "tp": 369,
-    "fp": 127,
-    "fn": 159,
-    "precision": 0.7439516129032258,
-    "recall": 0.6988636363636364,
-    "f1": 0.720703125,
-    "seconds_per_frame": 20.44413701693217,
-    "seconds_per_tile": 4.088827403386434
+    "tp": 744,
+    "fp": 261,
+    "fn": 312,
+    "precision": 0.7402985074626866,
+    "recall": 0.7045454545454546,
+    "f1": 0.7219796215429403,
+    "seconds_per_frame": 20.6905321876208,
+    "seconds_per_tile": 4.13810643752416
   },
   "environment": {
-    "utc": "2026-10-20T07:44:42+00:00",
+    "utc": "2026-10-20T10:22:34+00:00",
     "device": "cpu",
+    "gpu": null,
     "python": "3.13.7",
     "platform": "Windows-11-10.0.26300-SP0",
     "torch": "2.14.0+cpu",
     "torchvision": "0.29.1+cpu",
     "opencv": "4.13.0",
     "numpy": "2.3.2",
-    "git_revision": "94c7eac042218bab28df5b831ac833a169330d4e",
-    "git_dirty": true,
+    "git_revision": "f82ea5028be2b82c6e91195ce4d50bae47a42d43",
+    "git_dirty": false,
     "manifest_sha256": "20fa67c58725013d6077b5ce43d389c985dee04aa1e948b7dcd48eee78b1a3a7",
-    "command": "C:\\Users\\Acer\\Desktop\\football_player_tracking\\src\\soccer_tracking\\evaluate.py --split val --weights coco --stride 250"
+    "command": "C:\\Users\\Acer\\Desktop\\football_player_tracking\\src\\soccer_tracking\\evaluate.py --split val --weights coco --stride 125"
   }
 }
