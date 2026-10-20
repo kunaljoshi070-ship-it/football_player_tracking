@@ -48,4 +48,20 @@ The assignment is individually assessed. Generative AI is allowed only if facult
 
 **Sources:** SoccerTrack v2 v1.2 clips and labels listed in `data/manifest.csv` (CC BY 4.0). No external code adapted; libraries: OpenCV, NumPy, PyTorch (BSD-style licenses).
 
+## 2026-10-20 — Claude (claude.ai), pretrained baseline and evaluation
+
+**Prompt:** “i do not have a gpu in my laptop” (answer to the AI's question about hardware; the audit and extraction output was pasted in the same message), followed by “Continue”.
+
+**Use:** Chose a CPU-feasible Phase I baseline (COCO-pretrained RetinaNet, person class, no training; fine-tuning is planned for a hosted GPU) and generated `src/soccer_tracking/metrics.py`, `detect.py`, `evaluate.py`, `tests/test_detection_eval.py` and the README section. Checks the AI ran: the NumPy parts (metrics, NMS, tile merging, the test-split guard) in unit tests; it could not run the torch glue. The student then ran the full test suite (39 tests pass, none skipped, so the torch glue works with the installed torchvision) and the baseline evaluation on the val split (24 frames of clip 117093, CPU, 4.1 s per tile): AP50 0.664, AP75 0.464, precision 0.744 and recall 0.699 at score 0.5 and IoU 0.5 (369 true positives, 127 false positives, 159 misses of 528 players); the run was made from an uncommitted working tree (`git_dirty: true` in `results/baseline_coco_val.json`), so it must be rerun from a clean commit before any number goes in the report.
+
+**Sources:** torchvision RetinaNet ResNet-50 FPN with `RetinaNet_ResNet50_FPN_Weights.COCO_V1` pretrained weights (torchvision, BSD-3-Clause code; weights trained on COCO, whose annotations are CC BY 4.0). Record the exact torchvision version and weight URL that the first run downloads (the JSON also records versions). No external code adapted.
+
+## 2026-10-20 — Claude (claude.ai), fine-tuning script
+
+**Prompt:** [no text; the student uploaded `results/baseline_coco_val.json` and pasted the terminal output of the test run and the baseline evaluation]
+
+**Use:** Interpreted the baseline result and generated `src/soccer_tracking/train.py`, `tests/test_training.py`, the reusable `evaluate_model` function in `evaluate.py`, checkpoint loading and `adapt_head` in `detect.py`, and the README section on training on a hosted GPU. Checks the AI ran: the unit tests that need no torch (41 tests across the repo, 4 skipped because torch is not installed in the AI's environment). The training loop, checkpoint resume and the torch-dependent smoke test were **not** run by the AI, and no model has been trained. The student must run the tests, then a short smoke run, then the real run, and review the curves and `metrics.csv` before reporting any number.
+
+**Sources:** torchvision RetinaNet ResNet-50 FPN COCO_V1 weights (as above); Hugging Face `huggingface_hub` (Apache-2.0) to download the clips in Colab; matplotlib for `curves.png`. Training recipe (SGD with momentum, warmup plus cosine schedule, gradient clipping, replacing the final classification layer) follows common detection fine-tuning practice and torchvision's reference defaults; no external code adapted.
+
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.

@@ -77,3 +77,49 @@ train.meta(0)              # clip id, frame, tile window, flipped, track ids: ma
 Settings (all are arguments, defaults shown): frames sampled every 25th (1 per second at 25 fps) and stored as JPEG quality 95; tiles 1024x1080 with 128 px overlap (5 tiles per 4096x1080 frame); a box is kept in a tile if at least 50% of it is visible and it is at least 4 px in both directions; horizontal flip with p = 0.5 only when `augment=True`, decided by `default_rng([seed, epoch, index])` (call `set_epoch`). Splits are whole matches taken from `data/manifest.csv`; the loader refuses a clip listed twice, an unknown split, a frame-size mismatch, or annotations that do not span the video's frames.
 
 Known limits: a player cut by a tile edge is not labelled in the tile where less than half of them is visible (they appear whole in the neighbouring tile), so tile-level detections must be merged (for example with NMS) before frame-level evaluation or tracking. Tiles are cut at native scale, so Phase I results are for this camera setup and 4096x1080 clips.
+
+## Pretrained baseline and evaluation
+
+`src/soccer_tracking/evaluate.py` runs a detector over the tiles, merges the tile detections into full-frame boxes (`detect.py`: shift to frame coordinates, drop boxes cut by an interior tile border, NMS across tiles) and scores them against the labels (`metrics.py`: AP at IoU 0.5 and 0.75, plus precision, recall and F1 at a score threshold). The Phase I **baseline** is torchvision's COCO-pretrained RetinaNet (ResNet-50 FPN) used as-is, keeping only the `person` class as `player`; no training is involved, so it runs on a CPU.
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m soccer_tracking.evaluate --split val --weights coco --stride 250
+# writes results/baseline_coco_val.json (settings, versions, git revision, metrics); the first run downloads the COCO weights
+```
+
+`--weights` also accepts a fine-tuned `.pt` checkpoint from `train.py`. `--stride` must be a multiple of the extraction stride (25); the default 250 evaluates 24 frames per clip so a CPU run stays short (use 125 or 25 for a larger, less noisy sample). The test split is refused unless `--allow-test` is passed: use it once, at the end, never to choose settings. Metrics are computed on full frames, with ground-truth boxes clipped to the frame. AP uses all-point interpolation, so it is close to but not identical to COCO's 101-point AP.
+
+## Training on a hosted GPU (Colab)
+
+`src/soccer_tracking/train.py` fine-tunes the COCO-pretrained RetinaNet on the train tiles (one class, `player`): SGD with momentum, linear warmup then cosine decay, gradient clipping, mixed precision on CUDA, validation (full-frame AP) after every epoch, early stopping on validation AP50, and a best/last checkpoint. It writes `runs/<run-name>/` with `config_<utc>.json` (all settings, versions, git revision, GPU), `iterations.csv` and `metrics.csv` (learning curves), `curves.png`, `summary.json` and the checkpoints (`*.pt` is git-ignored). A laptop CPU is far too slow (inference alone took about 4 s per tile); use a GPU session, for example Colab (Runtime, Change runtime type, GPU). Colab already has torch, torchvision, OpenCV, NumPy and matplotlib.
+
+Download the clips inside Colab from Hugging Face with your own account; do not upload them from your laptop, and never paste your token into a cell or commit it. Store it as a Colab secret named `HF_TOKEN` (the token must belong to the account that accepted the dataset conditions). Storage in a Colab session is temporary.
+
+```python
+# cell 1: code and data
+!git clone <your-repo-url> repo
+%cd repo
+!pip -q install huggingface_hub
+import os, shutil
+from google.colab import userdata
+from huggingface_hub import hf_hub_download, login
+login(token=userdata.get("HF_TOKEN"))
+os.makedirs("data/raw", exist_ok=True)
+for i in ["118575", "118576", "117093", "128057"]:          # the clips listed in data/manifest.csv
+    for ext, folder in (("mp4", "mot/clips"), ("txt", "mot")):
+        path = hf_hub_download("atomscott/soccertrack-v2", f"{folder}/{i}.{ext}", repo_type="dataset")
+        shutil.copy(path, f"data/raw/{i}.{ext}")
+```
+
+```python
+# cell 2: verify, extract, test, train, evaluate (the test split stays untouched)
+%env PYTHONPATH=src
+!python -m soccer_tracking.data audit --verify-hashes
+!python -m soccer_tracking.data extract
+!python -m unittest discover -s tests
+!python -m soccer_tracking.train --run-name finetune --epochs 8
+!python -m soccer_tracking.evaluate --split val --weights runs/finetune/best.pt --stride 125
+```
+
+`--verify-hashes` confirms the downloaded files are byte-identical to the ones recorded in `data/manifest.csv`. If the GPU runs out of memory add `--batch-size 2`; to continue an interrupted run use `--resume runs/finetune/last.pt`. Copy `runs/finetune/` (the small CSV, JSON and PNG files; the checkpoint if you want it) and `results/` back to your computer before the session ends, then commit the small files only.

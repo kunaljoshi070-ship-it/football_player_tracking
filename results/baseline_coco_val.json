@@ -1,0 +1,64 @@
+{
+  "task": "player detection, tiles merged to full frames",
+  "settings": {
+    "manifest": "data\\manifest.csv",
+    "frames_root": "data\\processed\\frames",
+    "split": "val",
+    "allow_test": false,
+    "weights": "coco",
+    "stride": 250,
+    "tile": [
+      1024,
+      1080
+    ],
+    "overlap": 128,
+    "score_thresh": 0.05,
+    "nms_thresh": 0.5,
+    "merge_iou": 0.5,
+    "drop_edge_px": 2.0,
+    "report_score": 0.5,
+    "batch_size": 2,
+    "device": "auto",
+    "seed": 0,
+    "out": null
+  },
+  "label_convention": "label 1 = person (COCO) = player; all other detector classes discarded",
+  "clips": [
+    {
+      "clip_id": "117093",
+      "frames_evaluated": 24,
+      "tiles_per_frame": 5
+    }
+  ],
+  "results": {
+    "images": 24,
+    "n_gt": 528,
+    "n_pred": 13248,
+    "ap50": 0.663686847307482,
+    "ap75": 0.463960391462225,
+    "report_score": 0.5,
+    "iou_for_pr": 0.5,
+    "tp": 369,
+    "fp": 127,
+    "fn": 159,
+    "precision": 0.7439516129032258,
+    "recall": 0.6988636363636364,
+    "f1": 0.720703125,
+    "seconds_per_frame": 20.44413701693217,
+    "seconds_per_tile": 4.088827403386434
+  },
+  "environment": {
+    "utc": "2026-10-20T07:44:42+00:00",
+    "device": "cpu",
+    "python": "3.13.7",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "torch": "2.14.0+cpu",
+    "torchvision": "0.29.1+cpu",
+    "opencv": "4.13.0",
+    "numpy": "2.3.2",
+    "git_revision": "94c7eac042218bab28df5b831ac833a169330d4e",
+    "git_dirty": true,
+    "manifest_sha256": "20fa67c58725013d6077b5ce43d389c985dee04aa1e948b7dcd48eee78b1a3a7",
+    "command": "C:\\Users\\Acer\\Desktop\\football_player_tracking\\src\\soccer_tracking\\evaluate.py --split val --weights coco --stride 250"
+  }
+}
