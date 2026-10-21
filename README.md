@@ -126,16 +126,33 @@ If you see `No module named 'soccer_tracking'`, run `!pwd` and `!ls src/soccer_t
 
 `--verify-hashes` confirms the downloaded files are byte-identical to the ones recorded in `data/manifest.csv`. If the GPU runs out of memory add `--batch-size 2`; to continue an interrupted run use `--resume runs/finetune/last.pt`. Copy `runs/finetune/` (the small CSV, JSON and PNG files; the checkpoint if you want it) and `results/` back to your computer before the session ends, then commit the small files only.
 
-## Results so far (validation split only)
+## Results
 
-Same 48 validation frames (clip 117093, every 125th frame), same tiling, merge and metric code for both rows; precision and recall are at score 0.5 and IoU 0.5.
+Frozen protocol: [`docs/phase1_proposal.md`](docs/phase1_proposal.md) (amendment of 2026-10-21). The validation clip (117093) was used to choose the epoch and the tracker settings; the test match (128057) was scored once for each model and once for the tracking comparison, and the results are reported as obtained.
 
-| Model | AP50 | AP75 | Precision | Recall |
-|---|---|---|---|---|
-| Pretrained COCO RetinaNet, no training (`results/baseline_coco_val.json`) | 0.657 | 0.462 | 0.740 | 0.705 |
-| Fine-tuned on matches 118575 and 118576, epoch 3 of 6 (`runs/finetune/`) | 0.959 | 0.860 | 0.874 | 0.958 |
+**Detector** (every 125th frame, 48 frames per clip; same tiling, merge and metric code; precision and recall at score 0.5 and IoU 0.5):
 
-Fine-tuning ran on a Colab T4 (batch 4, SGD peak learning rate 0.005, warmup then cosine decay, mixed precision, seed 0; about 42 minutes for 6 epochs). Early stopping on validation AP50 (patience 3) ended the run after epoch 6 and the checkpoint with the best validation AP50 (epoch 3) is the Phase I detector. Learning curves: `runs/finetune/curves.png`, `metrics.csv`, `iterations.csv`; all settings and versions: `runs/finetune/config_*.json`. The validation clip was also used to pick the epoch, so these validation numbers are slightly optimistic; the test match (128057) has not been evaluated.
+| Model | Clip | AP50 | AP75 | Precision | Recall |
+|---|---|---|---|---|---|
+| Pretrained COCO RetinaNet, no training | val 117093 | 0.657 | 0.462 | 0.740 | 0.705 |
+| Fine-tuned (matches 118575, 118576; epoch 3 of 6) | val 117093 | 0.959 | 0.860 | 0.874 | 0.958 |
+| Pretrained COCO RetinaNet, no training | **test 128057** | 0.788 | 0.560 | 0.849 | 0.791 |
+| Fine-tuned | **test 128057** | 0.950 | 0.830 | 0.893 | 0.951 |
+
+Criterion 1 (test: at least +0.10 AP50 and +0.15 AP75 over the pretrained model): +0.162 and +0.270, **met**. The gain is smaller on test than on validation because the pretrained model does better on the test match, whose players are larger (median box height 50.8 px against 44.0 px in training); the fine-tuned model scores about the same on both clips. Fine-tuning ran on a Colab T4 (batch 4, SGD peak learning rate 0.005, warmup then cosine decay, mixed precision, seed 0, about 42 minutes); curves in `runs/finetune/curves.png`.
+
+**Tracking** (three segments of 250 consecutive frames per clip; both arms use the same detections at score 0.5; tracker settings chosen on validation: `iou_thr` 0.4, `max_age` 1, `min_hits` 1, motion prediction on):
+
+| Arm | Clip | Interruptions per player track | F1 | MODA | ID switches | ids per player |
+|---|---|---|---|---|---|---|
+| Detector-only | val | 0.985 | 0.926 | 0.841 | n/a | n/a |
+| IoU tracker | val | 0.652 | 0.914 | 0.812 | 98 | 2.44 |
+| Detector-only | **test** | 1.545 | 0.912 | 0.811 | n/a | n/a |
+| IoU tracker | **test** | 0.788 | 0.897 | 0.774 | 140 | 2.98 |
+
+Criterion 2 (test: interruptions per track at least 25% lower, F1 lower by at most 0.02): **49.0% lower** (all 3 segments improved) and **F1 0.015 lower**, **met**. Read this together with the cost: the tracker bridges one-frame misses, which removes interruptions, but it also adds false-positive boxes (MODA falls by 0.037 on test) and its ids are not reliable (about 3 different ids per player in 10 seconds, 140 switches). The tracks are image-plane continuity aids, not player identities. Limits: one validation and one test match, three segments each, small counts (102 versus 52 interruptions on test), a deliberately simple tracker.
+
+**Runtime:** pretrained model on the laptop CPU about 20 s per frame (5 tiles); fine-tuned model on a Colab T4 about 1.1 s per frame including video decoding.
 
 ## Tracking comparison (detector-only vs IoU tracker)
 
