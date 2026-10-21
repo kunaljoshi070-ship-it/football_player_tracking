@@ -114,12 +114,25 @@ for i in ["118575", "118576", "117093", "128057"]:          # the clips listed i
 
 ```python
 # cell 2: verify, extract, test, train, evaluate (the test split stays untouched)
-%env PYTHONPATH=src
-!python -m soccer_tracking.data audit --verify-hashes
-!python -m soccer_tracking.data extract
-!python -m unittest discover -s tests
-!python -m soccer_tracking.train --run-name finetune --epochs 8
-!python -m soccer_tracking.evaluate --split val --weights runs/finetune/best.pt --stride 125
+%cd /content/repo
+!PYTHONPATH=src python -m soccer_tracking.data audit --verify-hashes
+!PYTHONPATH=src python -m soccer_tracking.data extract
+!PYTHONPATH=src python -m unittest discover -s tests
+!PYTHONPATH=src python -m soccer_tracking.train --run-name finetune --epochs 8
+!PYTHONPATH=src python -m soccer_tracking.evaluate --split val --weights runs/finetune/best.pt --stride 125
 ```
 
+If you see `No module named 'soccer_tracking'`, run `!pwd` and `!ls src/soccer_tracking`: you must be in the cloned repo (`/content/repo`) and the listing must include `train.py`. If the folder is missing the runtime was reset (the clone and downloads are wiped, so rerun cell 1); if `train.py` is missing the latest code was not pushed (`git push` from your laptop, then `!git pull`). Run a quick speed and memory check before the full run: `!PYTHONPATH=src python -m soccer_tracking.train --run-name smoke --epochs 1 --max-iters-per-epoch 20`.
+
 `--verify-hashes` confirms the downloaded files are byte-identical to the ones recorded in `data/manifest.csv`. If the GPU runs out of memory add `--batch-size 2`; to continue an interrupted run use `--resume runs/finetune/last.pt`. Copy `runs/finetune/` (the small CSV, JSON and PNG files; the checkpoint if you want it) and `results/` back to your computer before the session ends, then commit the small files only.
+
+## Results so far (validation split only)
+
+Same 48 validation frames (clip 117093, every 125th frame), same tiling, merge and metric code for both rows; precision and recall are at score 0.5 and IoU 0.5.
+
+| Model | AP50 | AP75 | Precision | Recall |
+|---|---|---|---|---|
+| Pretrained COCO RetinaNet, no training (`results/baseline_coco_val.json`) | 0.657 | 0.462 | 0.740 | 0.705 |
+| Fine-tuned on matches 118575 and 118576, epoch 3 of 6 (`runs/finetune/`) | 0.959 | 0.860 | 0.874 | 0.958 |
+
+Fine-tuning ran on a Colab T4 (batch 4, SGD peak learning rate 0.005, warmup then cosine decay, mixed precision, seed 0; about 42 minutes for 6 epochs). Early stopping on validation AP50 (patience 3) ended the run after epoch 6 and the checkpoint with the best validation AP50 (epoch 3) is the Phase I detector. Learning curves: `runs/finetune/curves.png`, `metrics.csv`, `iterations.csv`; all settings and versions: `runs/finetune/config_*.json`. The validation clip was also used to pick the epoch, so these validation numbers are slightly optimistic; the test match (128057) has not been evaluated.

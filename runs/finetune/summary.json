@@ -1,0 +1,7 @@
+{
+  "best_epoch": 3,
+  "best_val_ap50": 0.9593393563198402,
+  "epochs_run": 6,
+  "iterations": 3594,
+  "run_dir": "/content/drive/MyDrive/soccer_runs/finetune"
+}

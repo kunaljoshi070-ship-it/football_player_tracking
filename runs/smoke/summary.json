@@ -1,0 +1,7 @@
+{
+  "best_epoch": 1,
+  "best_val_ap50": 0.39923810361866063,
+  "epochs_run": 1,
+  "iterations": 20,
+  "run_dir": "runs/smoke"
+}

@@ -1,0 +1,59 @@
+{
+  "settings": {
+    "manifest": "data/manifest.csv",
+    "frames_root": "data/processed/frames",
+    "out_dir": "runs",
+    "run_name": "smoke",
+    "init": "coco",
+    "stride": 25,
+    "tile": [
+      1024,
+      1080
+    ],
+    "overlap": 128,
+    "epochs": 1,
+    "batch_size": 4,
+    "lr": 0.005,
+    "momentum": 0.9,
+    "weight_decay": 0.0001,
+    "warmup_iters": 100,
+    "clip_grad": 10.0,
+    "patience": 3,
+    "val_stride": 125,
+    "amp": true,
+    "workers": 2,
+    "seed": 0,
+    "device": "auto",
+    "log_every": 20,
+    "max_iters_per_epoch": 20,
+    "resume": null,
+    "overwrite": false
+  },
+  "train_clips": [
+    "118575",
+    "118576"
+  ],
+  "val_clips": [
+    "117093"
+  ],
+  "train_tiles": 2395,
+  "iterations_per_epoch": 20,
+  "amp_used": true,
+  "trainable_parameters": 31946294,
+  "notes": "COCO_V1 weights, classification output layer re-initialised for 2 classes; torchvision default frozen BatchNorm and trainable backbone layers; GPU runs are not bit-exact reproducible",
+  "environment": {
+    "utc": "2026-10-21T05:24:29+00:00",
+    "device": "cuda",
+    "gpu": "Tesla T4",
+    "python": "3.13.15",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu130",
+    "torchvision": "0.26.0+cu130",
+    "opencv": "4.14.0",
+    "numpy": "2.1.3",
+    "git_revision": "25098dc6c993d60579c25bb3cf1d63e10841e9d4",
+    "git_dirty": false,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/train.py --run-name smoke --epochs 1 --max-iters-per-epoch 20"
+  }
+}
