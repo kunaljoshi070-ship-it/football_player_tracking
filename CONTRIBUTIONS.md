@@ -72,4 +72,14 @@ The assignment is individually assessed. Generative AI is allowed only if facult
 
 **Sources:** SoccerTrack v2 clips 118575, 118576 (train) and 117093 (validation); torchvision COCO_V1 RetinaNet weights as above.
 
+## 2026-10-21 — Claude (claude.ai), tracker and tracking comparison
+
+**Prompt:** “looks fine, lets continue with the next task” (agreeing to the proposed success criteria: detector beats the pretrained baseline on test by at least 0.10 AP50 and 0.15 AP75; tracker cuts fragmentation per track by at least 25% relative with F1 lower by at most 0.02).
+
+**Follow-up prompt:** “you can add it; also show me step by step what i have to do next, i have closed the runtime in colab” (accepting the suggested per-segment breakdown, which is in `track_eval.py`; the AI also made `evaluate` print it, extended the test and the README, and wrote step-by-step Colab instructions).
+
+**Use:** Wrote the amendment to `docs/phase1_proposal.md` (frozen protocol, appended, original text unchanged) and generated `src/soccer_tracking/tracker.py`, `track_metrics.py`, `track_eval.py`, `tests/test_tracking.py` and the README section. Checks the AI ran: unit tests of the tracker, the measures (with hand-computed expectations) and the `tune`/`evaluate` commands on synthetic detections (58 tests across the repo pass; 4 are skipped because torch is not installed in the AI's environment). Not run by the AI: the `detect` command (needs the model and a GPU) and anything on real detections, so no tracking result exists yet. The student must run the tests, then `detect`, `tune` and `evaluate` on the validation clip, commit the tuning file, and only then run the single test evaluation.
+
+**Sources:** The tracker follows the general idea of IOU-tracker style association (Bochinski et al., 2017) and SORT-style motion prediction (Bewley et al., 2016), re-implemented from scratch with no code adapted. Matching with kept previous correspondences, ID switches and MOTA follow the CLEAR-MOT definitions (Bernardin and Stiefelhagen, 2008). Fragmentation per track is a project-specific definition (documented in `track_metrics.py` and the proposal amendment), not the MOT Challenge FM count.
+
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.

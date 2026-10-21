@@ -136,3 +136,31 @@ Same 48 validation frames (clip 117093, every 125th frame), same tiling, merge a
 | Fine-tuned on matches 118575 and 118576, epoch 3 of 6 (`runs/finetune/`) | 0.959 | 0.860 | 0.874 | 0.958 |
 
 Fine-tuning ran on a Colab T4 (batch 4, SGD peak learning rate 0.005, warmup then cosine decay, mixed precision, seed 0; about 42 minutes for 6 epochs). Early stopping on validation AP50 (patience 3) ended the run after epoch 6 and the checkpoint with the best validation AP50 (epoch 3) is the Phase I detector. Learning curves: `runs/finetune/curves.png`, `metrics.csv`, `iterations.csv`; all settings and versions: `runs/finetune/config_*.json`. The validation clip was also used to pick the epoch, so these validation numbers are slightly optimistic; the test match (128057) has not been evaluated.
+
+## Tracking comparison (detector-only vs IoU tracker)
+
+`src/soccer_tracking/tracker.py` is a deliberately simple IoU tracker (greedy association, optional linear motion prediction, short-gap coasting, no appearance model). `track_metrics.py` defines the measures (F1, MODA, fragmentation per track, ID switches, ids per track, MOTA) and `track_eval.py` runs the protocol frozen in the "Amendment" of [`docs/phase1_proposal.md`](docs/phase1_proposal.md): three 250-frame segments per clip (starting at frames 500, 2500, 4500), both arms on the same saved detections at score >= 0.5. `detect` needs a GPU (run it in Colab, after the training steps above, with the clips in `data/raw/`); `tune` and `evaluate` need only NumPy.
+
+```python
+# Colab, in /content/repo (git pull first); best.pt is the checkpoint on your Drive
+!PYTHONPATH=src python -m soccer_tracking.track_eval detect   --split val --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt
+!PYTHONPATH=src python -m soccer_tracking.track_eval tune     --split val       # grid search on validation only -> results/tracker_tuning.json
+!PYTHONPATH=src python -m soccer_tracking.track_eval evaluate --split val       # detector-only vs tracker on validation
+```
+
+Commit `results/tracker_tuning.json` (and push) before touching the test match: the tracker settings must be frozen first. Then, once and only once:
+
+```python
+!PYTHONPATH=src python -m soccer_tracking.track_eval detect   --split test --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt --allow-test
+!PYTHONPATH=src python -m soccer_tracking.track_eval evaluate --split test --allow-test
+```
+
+For criterion 1 (detector against the pretrained baseline on the test match) extract the test frames first, then score both models once each:
+
+```python
+!PYTHONPATH=src python -m soccer_tracking.data extract --splits test
+!PYTHONPATH=src python -m soccer_tracking.evaluate --split test --weights coco --stride 125 --allow-test --out results/test_baseline_coco.json
+!PYTHONPATH=src python -m soccer_tracking.evaluate --split test --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt --stride 125 --allow-test --out results/test_finetuned.json
+```
+
+`tune` refuses the test split and `evaluate`/`detect` refuse it without `--allow-test`. Detections are saved to `data/processed/detections/finetune/` (git-ignored); the JSON files in `results/` are small and are committed. `tune` and `evaluate` also print and save a per-segment breakdown (gaps, F1 and ID switches for each 250-frame segment, plus how many segments the tracker improves), so you can see whether the three segments agree. `evaluate` prints PASS or FAIL for each frozen criterion. Fragmentation counts interruptions (a run of unmatched frames between two matched frames) per player track, so it is defined for detector-only output too; ids are image-plane track ids, not player identities.
