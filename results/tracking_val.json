@@ -1,0 +1,179 @@
+{
+  "split": "val",
+  "protocol": {
+    "starts": [
+      500,
+      2500,
+      4500
+    ],
+    "seg_len": 250,
+    "score": 0.5
+  },
+  "tracker_params": {
+    "iou_thr": 0.4,
+    "max_age": 1,
+    "min_hits": 1,
+    "use_velocity": true
+  },
+  "params_file": "results/tracker_tuning.json",
+  "detector_only": {
+    "n_gt": 16500,
+    "tp": 16339,
+    "fp": 2460,
+    "fn": 161,
+    "precision": 0.869141975637002,
+    "recall": 0.9902424242424243,
+    "f1": 0.9257486047763392,
+    "moda": 0.8411515151515152,
+    "gaps": 65,
+    "n_tracks": 66,
+    "frag_per_track": 0.9848484848484849,
+    "idsw": null,
+    "mota": null,
+    "ids_per_track": null
+  },
+  "tracker": {
+    "n_gt": 16500,
+    "tp": 16365,
+    "fp": 2959,
+    "fn": 135,
+    "precision": 0.8468743531359967,
+    "recall": 0.9918181818181818,
+    "f1": 0.9136333184457347,
+    "moda": 0.8124848484848485,
+    "gaps": 43,
+    "n_tracks": 66,
+    "frag_per_track": 0.6515151515151515,
+    "idsw": 98,
+    "mota": 0.8065454545454546,
+    "ids_per_track": 2.4393939393939394
+  },
+  "criteria": {
+    "frag_reduction_relative": 0.3384615384615385,
+    "f1_drop": 0.012115286330604547,
+    "min_frag_reduction": 0.25,
+    "max_f1_drop": 0.02,
+    "fragmentation_ok": true,
+    "f1_ok": true
+  },
+  "per_segment": [
+    {
+      "clip_id": "117093",
+      "start": 500,
+      "detector_only": {
+        "n_gt": 5500,
+        "tp": 5369,
+        "fp": 1020,
+        "fn": 131,
+        "precision": 0.8403506025982157,
+        "recall": 0.9761818181818182,
+        "f1": 0.903187820674573,
+        "moda": 0.7907272727272727,
+        "gaps": 43,
+        "n_tracks": 22,
+        "frag_per_track": 1.9545454545454546,
+        "idsw": null,
+        "mota": null,
+        "ids_per_track": null
+      },
+      "tracker": {
+        "n_gt": 5500,
+        "tp": 5388,
+        "fp": 1194,
+        "fn": 112,
+        "precision": 0.8185961713764813,
+        "recall": 0.9796363636363636,
+        "f1": 0.8919053136897865,
+        "moda": 0.7625454545454545,
+        "gaps": 29,
+        "n_tracks": 22,
+        "frag_per_track": 1.3181818181818181,
+        "idsw": 58,
+        "mota": 0.752,
+        "ids_per_track": 3.590909090909091
+      }
+    },
+    {
+      "clip_id": "117093",
+      "start": 2500,
+      "detector_only": {
+        "n_gt": 5500,
+        "tp": 5490,
+        "fp": 645,
+        "fn": 10,
+        "precision": 0.8948655256723717,
+        "recall": 0.9981818181818182,
+        "f1": 0.943704340352385,
+        "moda": 0.8809090909090909,
+        "gaps": 9,
+        "n_tracks": 22,
+        "frag_per_track": 0.4090909090909091,
+        "idsw": null,
+        "mota": null,
+        "ids_per_track": null
+      },
+      "tracker": {
+        "n_gt": 5500,
+        "tp": 5493,
+        "fp": 790,
+        "fn": 7,
+        "precision": 0.8742638866783383,
+        "recall": 0.9987272727272727,
+        "f1": 0.932360179920224,
+        "moda": 0.8550909090909091,
+        "gaps": 6,
+        "n_tracks": 22,
+        "frag_per_track": 0.2727272727272727,
+        "idsw": 12,
+        "mota": 0.852909090909091,
+        "ids_per_track": 1.5454545454545454
+      }
+    },
+    {
+      "clip_id": "117093",
+      "start": 4500,
+      "detector_only": {
+        "n_gt": 5500,
+        "tp": 5480,
+        "fp": 795,
+        "fn": 20,
+        "precision": 0.8733067729083666,
+        "recall": 0.9963636363636363,
+        "f1": 0.9307855626326964,
+        "moda": 0.8518181818181818,
+        "gaps": 13,
+        "n_tracks": 22,
+        "frag_per_track": 0.5909090909090909,
+        "idsw": null,
+        "mota": null,
+        "ids_per_track": null
+      },
+      "tracker": {
+        "n_gt": 5500,
+        "tp": 5484,
+        "fp": 975,
+        "fn": 16,
+        "precision": 0.8490478402229448,
+        "recall": 0.9970909090909091,
+        "f1": 0.9171335395936115,
+        "moda": 0.8198181818181818,
+        "gaps": 8,
+        "n_tracks": 22,
+        "frag_per_track": 0.36363636363636365,
+        "idsw": 28,
+        "mota": 0.8147272727272727,
+        "ids_per_track": 2.1818181818181817
+      }
+    }
+  ],
+  "environment": {
+    "utc": "2026-10-21T12:24:21+00:00",
+    "python": "3.13.15",
+    "numpy": "2.1.3",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "git_revision": "e7f57d99287b9d69e70211d8f87a10cffcdc8055",
+    "git_dirty": true,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/track_eval.py evaluate --split val"
+  }
+}
