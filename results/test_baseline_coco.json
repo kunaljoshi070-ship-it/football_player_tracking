@@ -1,0 +1,65 @@
+{
+  "task": "player detection, tiles merged to full frames",
+  "settings": {
+    "manifest": "data/manifest.csv",
+    "frames_root": "data/processed/frames",
+    "split": "test",
+    "allow_test": true,
+    "weights": "coco",
+    "stride": 125,
+    "tile": [
+      1024,
+      1080
+    ],
+    "overlap": 128,
+    "score_thresh": 0.05,
+    "nms_thresh": 0.5,
+    "merge_iou": 0.5,
+    "drop_edge_px": 2.0,
+    "report_score": 0.5,
+    "batch_size": 2,
+    "device": "auto",
+    "seed": 0,
+    "out": "results/test_baseline_coco.json"
+  },
+  "label_convention": "label 1 = person (COCO) = player; all other detector classes discarded",
+  "clips": [
+    {
+      "clip_id": "128057",
+      "frames_evaluated": 48,
+      "tiles_per_frame": 5
+    }
+  ],
+  "results": {
+    "images": 48,
+    "n_gt": 1056,
+    "n_pred": 27965,
+    "ap50": 0.788404138626886,
+    "ap75": 0.5601790729257887,
+    "report_score": 0.5,
+    "iou_for_pr": 0.5,
+    "tp": 835,
+    "fp": 148,
+    "fn": 221,
+    "precision": 0.8494404883011191,
+    "recall": 0.790719696969697,
+    "f1": 0.81902893575282,
+    "seconds_per_frame": 1.2982189655303955,
+    "seconds_per_tile": 0.2596437931060791
+  },
+  "environment": {
+    "utc": "2026-10-21T16:26:53+00:00",
+    "device": "cuda",
+    "gpu": "Tesla T4",
+    "python": "3.13.15",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu130",
+    "torchvision": "0.26.0+cu130",
+    "opencv": "4.14.0",
+    "numpy": "2.1.3",
+    "git_revision": "5f9a50f869ec55d110cc3ca1806dba5923b3a65f",
+    "git_dirty": false,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/evaluate.py --split test --weights coco --stride 125 --allow-test --out results/test_baseline_coco.json"
+  }
+}
