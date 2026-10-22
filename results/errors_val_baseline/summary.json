@@ -1,0 +1,125 @@
+{
+  "settings": {
+    "manifest": "data/manifest.csv",
+    "frames_root": "data/processed/frames",
+    "split": "val",
+    "allow_test": false,
+    "weights": "coco",
+    "stride": 125,
+    "tile": [
+      1024,
+      1080
+    ],
+    "overlap": 128,
+    "score_floor": 0.05,
+    "merge_iou": 0.5,
+    "drop_edge_px": 2.0,
+    "score": 0.5,
+    "iou": 0.5,
+    "n_per_type": 8,
+    "seed": 0,
+    "batch_size": 2,
+    "device": "auto",
+    "out_dir": "results/errors_val_baseline",
+    "images_dir": "data/processed/errors_val_baseline"
+  },
+  "summary": {
+    "n_gt": 1056,
+    "tp": 744,
+    "fn": 312,
+    "n_pred": 1005,
+    "fp": 261,
+    "precision": 0.7402985074626866,
+    "recall": 0.7045454545454546,
+    "fn_types": {
+      "merged_with_neighbour": 15,
+      "low_score": 258,
+      "poorly_localized": 36,
+      "missed": 3
+    },
+    "fp_types": {
+      "duplicate": 0,
+      "poorly_localized": 23,
+      "no_gt_overlap": 238
+    },
+    "recall_by_height": [
+      {
+        "height_px": "<30",
+        "n_gt": 37,
+        "recall": 0.10810810810810811
+      },
+      {
+        "height_px": "30-40",
+        "n_gt": 246,
+        "recall": 0.4065040650406504
+      },
+      {
+        "height_px": "40-50",
+        "n_gt": 374,
+        "recall": 0.6898395721925134
+      },
+      {
+        "height_px": "50-70",
+        "n_gt": 266,
+        "recall": 0.943609022556391
+      },
+      {
+        "height_px": ">=70",
+        "n_gt": 133,
+        "recall": 0.9849624060150376
+      }
+    ],
+    "recall_by_crowded": {
+      "yes": {
+        "n_gt": 148,
+        "recall": 0.31756756756756754
+      },
+      "no": {
+        "n_gt": 908,
+        "recall": 0.7676211453744494
+      }
+    },
+    "recall_by_near_tile_border": {
+      "yes": {
+        "n_gt": 116,
+        "recall": 0.6637931034482759
+      },
+      "no": {
+        "n_gt": 940,
+        "recall": 0.7095744680851064
+      }
+    },
+    "precision_by_score": [
+      {
+        "score": "0.5-0.7",
+        "n_pred": 592,
+        "precision": 0.7652027027027027
+      },
+      {
+        "score": "0.7-0.9",
+        "n_pred": 298,
+        "precision": 0.7483221476510067
+      },
+      {
+        "score": "0.9-1",
+        "n_pred": 115,
+        "precision": 0.591304347826087
+      }
+    ]
+  },
+  "environment": {
+    "utc": "2026-10-22T06:10:54+00:00",
+    "device": "cuda",
+    "gpu": "Tesla T4",
+    "python": "3.13.15",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu130",
+    "torchvision": "0.26.0+cu130",
+    "opencv": "4.14.0",
+    "numpy": "2.1.3",
+    "git_revision": "f23622fe0a6007dfc55fe79143b916b13b650a33",
+    "git_dirty": true,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/errors.py --split val --weights coco --out-dir results/errors_val_baseline --images-dir data/processed/errors_val_baseline"
+  }
+}
