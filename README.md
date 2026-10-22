@@ -181,3 +181,16 @@ For criterion 1 (detector against the pretrained baseline on the test match) ext
 ```
 
 `tune` refuses the test split and `evaluate`/`detect` refuse it without `--allow-test`. Detections are saved to `data/processed/detections/finetune/` (git-ignored); the JSON files in `results/` are small and are committed. `tune` and `evaluate` also print and save a per-segment breakdown (gaps, F1 and ID switches for each 250-frame segment, plus how many segments the tracker improves), so you can see whether the three segments agree. `evaluate` prints PASS or FAIL for each frozen criterion. Fragmentation counts interruptions (a run of unmatched frames between two matched frames) per player track, so it is defined for detector-only output too; ids are image-plane track ids, not player identities.
+
+## Error analysis
+
+`src/soccer_tracking/errors.py` explains the detector's mistakes at the operating point (score >= 0.5, IoU >= 0.5) on the same sampled frames as `evaluate.py` (default: the validation clip, every 125th frame). Missed players are typed `merged_with_neighbour`, `low_score`, `poorly_localized` or `missed`; false positives are typed `duplicate`, `poorly_localized` or `no_gt_overlap` (overlaps no labelled player: an unlabelled person such as a referee or substitute, or background). It also reports recall by box height, by crowding (share of a player covered by a neighbour's box) and by distance to a tile border, and precision by score band.
+
+```python
+# Colab, in /content/repo, with the validation clip in data/raw/
+!PYTHONPATH=src python -m soccer_tracking.data extract --splits val
+!PYTHONPATH=src python -m soccer_tracking.errors --split val --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt
+!PYTHONPATH=src python -m soccer_tracking.errors --split val --weights coco --out-dir results/errors_val_baseline --images-dir data/processed/errors_val_baseline   # optional: the pretrained model for contrast
+```
+
+Counts and typed rows are written to `results/errors_<split>/` (`summary.json`, `errors.csv`; no pixels, safe to commit). Image panels of sampled errors (`fp_examples.jpg`, `fn_examples.jpg`: yellow = labelled players, cyan = confident detections, red = the error) go to `data/processed/errors_<split>/`, which is git-ignored because they contain frames of people: keep them local and do not upload them to AI services; describe what you see in words. The test split needs `--allow-test` and is for a descriptive look only: never change the model, the tiling or the tracker because of what test errors show.

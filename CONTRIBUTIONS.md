@@ -86,4 +86,12 @@ The assignment is individually assessed. Generative AI is allowed only if facult
 
 **Sources:** The tracker follows the general idea of IOU-tracker style association (Bochinski et al., 2017) and SORT-style motion prediction (Bewley et al., 2016), re-implemented from scratch with no code adapted. Matching with kept previous correspondences, ID switches and MOTA follow the CLEAR-MOT definitions (Bernardin and Stiefelhagen, 2008). Fragmentation per track is a project-specific definition (documented in `track_metrics.py` and the proposal amendment), not the MOT Challenge FM count.
 
+## 2026-10-21 — Claude (claude.ai), error analysis and Phase I gap review
+
+**Prompt:** “lets start with the error analysis; can you please tell me if we are following the pasted project explanation and the hackathon instructions, if not, what have we not done yet(for phase 1), ignore the c,c++ or java implementation as i have been allowed to use python by my faculty” (attached: the hackathon instruction PDF and the Project 36 explanation).
+
+**Use:** Generated `src/soccer_tracking/errors.py`, `tests/test_errors.py` and the README section, and reviewed the project against the Project 36 explanation and the hackathon Phase I rubric and checklist (the review was given in the chat, not as a file). Checks the AI ran: the NumPy parts (typed false negatives and false positives checked against a hand-built scenario, breakdowns, panels, the test-split guard); 68 tests across the repo pass, 5 skipped because torch is not installed in the AI's environment. Not run by the AI: the tool on real frames. The student must run it, review `summary.json`, and look at the image panels locally (they contain frames of people and must not be committed or uploaded).
+
+**Sources:** No new external resources; no code adapted.
+
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.
