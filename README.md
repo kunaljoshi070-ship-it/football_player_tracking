@@ -15,6 +15,7 @@ The selected dataset is **SoccerTrack v2, release v1.2**, using only its annotat
 - [`AGENTS.md`](AGENTS.md): shared rules for any person or AI tool working on this repository.
 - [`docs/phase1_proposal.md`](docs/phase1_proposal.md): one-page proposal and experiment hypothesis.
 - [`docs/dataset_card.md`](docs/dataset_card.md): source, access, license, and sample plan.
+- [`docs/architecture.md`](docs/architecture.md): the detector's layers, tensor shapes, frozen and trainable parts, loss, training choices and what is original.
 - [`data/manifest.csv`](data/manifest.csv): record only the selected dataset version, splits, clip IDs, and permitted metadata.
 - [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md): individual and prompt-wise contribution record required by the assignment.
 

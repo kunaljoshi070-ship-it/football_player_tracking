@@ -2,6 +2,37 @@
 
 The assignment is individually assessed. Generative AI is allowed only if faculty permits it, and each use must be disclosed prompt-wise. Record substantive assistance and verify every accepted change yourself.
 
+## Source log (consolidated)
+
+Every external resource used in the submitted work. Links marked † were written from memory and should be clicked once before submission. Licences are as stated by the resource; confirm anything marked "confirm".
+
+| Resource | Type | Link | Licence or terms | Used for | Adapted? |
+|---|---|---|---|---|---|
+| SoccerTrack v2 v1.2, MOT subset: clips and labels (matches 118575, 118576, 117093 and 128057 in the experiments; all ten were downloaded, 117092 only for early tool checks) | Dataset | https://huggingface.co/datasets/atomscott/soccertrack-v2 | CC BY 4.0 (gated: access conditions accepted at download); attribution required | Training, validation and test | No. Used unmodified; frames are extracted to local JPEG files that are not committed |
+| Scott et al., SoccerTrack v2, arXiv:2508.01802 (2025) | Paper | https://arxiv.org/abs/2508.01802 | n/a | Dataset citation and split description | n/a |
+| torchvision RetinaNet (ResNet-50 FPN) with `RetinaNet_ResNet50_FPN_Weights.COCO_V1` weights | Architecture and pretrained weights | https://pytorch.org/vision/stable/models/retinanet.html † and https://download.pytorch.org/models/retinanet_resnet50_fpn_coco-eeacb38b.pth | torchvision code: BSD-3-Clause; the weights were trained on COCO (confirm the weights' terms in the torchvision model documentation) | Pretrained baseline; initialisation for fine-tuning | Only the final classification convolution is replaced (`adapt_head`); the frozen layers are torchvision's default for pretrained weights; no code copied |
+| PyTorch and torchvision | Libraries | https://pytorch.org | BSD-3-Clause | Model, training, evaluation | No (public API) |
+| OpenCV (`opencv-python`) | Library | https://opencv.org | Apache-2.0 | Video decoding, JPEG files, drawing | No |
+| NumPy | Library | https://numpy.org | BSD-3-Clause | Arrays, metrics, tracker | No |
+| Matplotlib | Library | https://matplotlib.org | Matplotlib licence (BSD-compatible) | Learning curves, architecture diagram | No |
+| `huggingface_hub` | Library | https://github.com/huggingface/huggingface_hub | Apache-2.0 | Downloading the dataset in Colab | No |
+| Google Colab (T4 GPU) | Platform | https://colab.research.google.com | Google terms of service | Training and evaluation compute | n/a |
+| Lin et al., Focal Loss for Dense Object Detection (RetinaNet), 2017 | Paper | https://arxiv.org/abs/1708.02002 | n/a | Architecture and loss explained in `docs/architecture.md` | No code |
+| Lin et al., Feature Pyramid Networks for Object Detection, 2017 | Paper | https://arxiv.org/abs/1612.03144 | n/a | Same | No code |
+| He et al., Deep Residual Learning for Image Recognition, 2016 | Paper | https://arxiv.org/abs/1512.03385 | n/a | Same | No code |
+| Lin et al., Microsoft COCO: Common Objects in Context, 2014 | Paper and dataset | https://arxiv.org/abs/1405.0312 | n/a (the pretrained weights were trained on it) | Origin of the pretrained weights | No |
+| Bochinski, Eiselein, Sikora, High-Speed Tracking-by-Detection Without Using Image Information, AVSS 2017 | Paper | none (conference paper) | n/a | Idea behind the IoU tracker | Re-implemented from scratch, no code |
+| Bewley et al., Simple Online and Realtime Tracking (SORT), 2016 | Paper | https://arxiv.org/abs/1602.00763 | n/a | Idea of motion prediction and association | Re-implemented from scratch (no Kalman filter), no code |
+| Bernardin and Stiefelhagen, CLEAR MOT metrics, EURASIP JIVP 2008 | Paper | https://doi.org/10.1155/2008/246309 † | n/a | Definitions of MODA, MOTA and ID switches | Definitions only; fragmentation per track is a project-specific measure |
+
+**Libraries listed in `requirements.txt` but not used by the code:** `pandas` and `PyYAML` (to be removed when the versions are pinned).
+
+**Notebooks, tutorials and repositories:** none were copied or adapted. The Colab cells in the README were written by the student with AI assistance (see the entries below).
+
+**Statement of adaptation:** no external code fragment, notebook, tutorial or repository was copied or adapted. Libraries are used through their public APIs. The only change to a pretrained model is the replacement of its final classification convolution; everything else about the model is torchvision's.
+
+**Generative AI:** ChatGPT/Codex (initial planning and setup) and Claude (code, tests, documentation and analysis), each use recorded prompt-wise in the entries below, with what was run and verified by the student.
+
 ## 2026-10-18 — ChatGPT/Codex
 
 **Prompt:** “i have setup the remote github as well as the local repo(i have made the repo private because we may use confidential datasets; correct me if otherwise or if i can make the repo public); i have attached my project details as well as assignment rubric(project number 36); tell me what datasets do i need to use(give links too) as well as claude and gemini setup( i do not have claude code so i have to manually setup instructions and context)”
@@ -103,5 +134,15 @@ The assignment is individually assessed. Generative AI is allowed only if facult
 **Use:** Generated `src/soccer_tracking/describe_model.py`, `tests/test_describe_model.py` and the README section. Checks the AI ran: the NumPy shape helper test (70 tests across the repo pass, 6 skipped because torch is not installed in the AI's environment). Not run by the AI: the script itself on a real model, so none of its output has been seen by the AI yet. The student must run the tests and the script, and the architecture document must be written only from the script's real output.
 
 **Sources:** torchvision RetinaNet ResNet-50 FPN (COCO_V1 weights) as above; no code adapted.
+
+## 2026-10-21 — Claude (claude.ai), architecture document
+
+**Prompt:** [pasted the console output of the unit tests (70 pass, none skipped) and of `describe_model`] “the trainable parameter count is 31,946,294”; then “Continue”.
+
+**Next prompt:** [pasted the output of the three torchvision source-inspection commands; no other text]
+
+**Use:** Wrote `docs/architecture.md` and generated `docs/figures/make_architecture_figure.py` and `docs/figures/architecture.png` from the student's real `describe_model` output; added a link in the README. The AI cross-checked the printed parameter counts by hand (frozen = conv1 9,408 + layer1 212,992 = 222,400; FPN, head and anchor totals follow from the layer definitions) and checked the figure visually (it first had overlapping labels, which were fixed). The document first marked some statements about torchvision internals as coming from the AI's knowledge; the student then ran three `inspect.getsource` commands, which confirmed that the focal loss is called with its default alpha and gamma, that both losses are divided by the number of positive anchors per image and averaged over the batch, that anchors with IoU between the two thresholds are ignored by the classification loss, and that the anchor aspect ratio is height/width. The AI then replaced the markers with these verified statements. The helper `_box_loss` was not inspected. No hyperparameter was tuned for this document; it explains values already used.
+
+**Sources:** torchvision RetinaNet ResNet-50 FPN and COCO_V1 weights; Lin et al., "Focal Loss for Dense Object Detection" (RetinaNet, 2017); Lin et al., "Feature Pyramid Networks for Object Detection" (2017); He et al., "Deep Residual Learning for Image Recognition" (2016); Lin et al., "Microsoft COCO" (2014). No code adapted.
 
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.
