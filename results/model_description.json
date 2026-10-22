@@ -1,0 +1,699 @@
+{
+  "model": "torchvision RetinaNet, ResNet-50 FPN backbone",
+  "weights": "coco",
+  "num_classes": 2,
+  "input_hw": [
+    1080,
+    1024
+  ],
+  "totals": {
+    "params": 32168694,
+    "trainable": 31946294,
+    "frozen": 222400
+  },
+  "by_component": {
+    "backbone.body (ResNet-50)": {
+      "params": 23454912,
+      "trainable": 23232512,
+      "frozen": 222400
+    },
+    "backbone.fpn": {
+      "params": 3868672,
+      "trainable": 3868672,
+      "frozen": 0
+    },
+    "head.classification_head": {
+      "params": 2401810,
+      "trainable": 2401810,
+      "frozen": 0
+    },
+    "head.regression_head": {
+      "params": 2443300,
+      "trainable": 2443300,
+      "frozen": 0
+    }
+  },
+  "backbone_stages": {
+    "conv1": {
+      "params": 9408,
+      "trainable": 0,
+      "frozen": 9408,
+      "status": "frozen"
+    },
+    "bn1": {
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0,
+      "status": "no parameters"
+    },
+    "relu": {
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0,
+      "status": "no parameters"
+    },
+    "maxpool": {
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0,
+      "status": "no parameters"
+    },
+    "layer1": {
+      "params": 212992,
+      "trainable": 0,
+      "frozen": 212992,
+      "status": "frozen"
+    },
+    "layer2": {
+      "params": 1212416,
+      "trainable": 1212416,
+      "frozen": 0,
+      "status": "trainable"
+    },
+    "layer3": {
+      "params": 7077888,
+      "trainable": 7077888,
+      "frozen": 0,
+      "status": "trainable"
+    },
+    "layer4": {
+      "params": 14942208,
+      "trainable": 14942208,
+      "frozen": 0,
+      "status": "trainable"
+    }
+  },
+  "norm_layers": [
+    "Conv2dNormActivation",
+    "FrozenBatchNorm2d"
+  ],
+  "modules": [
+    {
+      "name": "backbone",
+      "type": "BackboneWithFPN",
+      "params": 27323584,
+      "trainable": 27101184,
+      "frozen": 222400
+    },
+    {
+      "name": "backbone.body",
+      "type": "IntermediateLayerGetter",
+      "params": 23454912,
+      "trainable": 23232512,
+      "frozen": 222400,
+      "blocks": 8
+    },
+    {
+      "name": "backbone.body.conv1",
+      "type": "Conv2d",
+      "params": 9408,
+      "trainable": 0,
+      "frozen": 9408
+    },
+    {
+      "name": "backbone.body.bn1",
+      "type": "FrozenBatchNorm2d",
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0
+    },
+    {
+      "name": "backbone.body.relu",
+      "type": "ReLU",
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0
+    },
+    {
+      "name": "backbone.body.maxpool",
+      "type": "MaxPool2d",
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0
+    },
+    {
+      "name": "backbone.body.layer1",
+      "type": "Sequential",
+      "params": 212992,
+      "trainable": 0,
+      "frozen": 212992,
+      "blocks": 3
+    },
+    {
+      "name": "backbone.body.layer2",
+      "type": "Sequential",
+      "params": 1212416,
+      "trainable": 1212416,
+      "frozen": 0,
+      "blocks": 4
+    },
+    {
+      "name": "backbone.body.layer3",
+      "type": "Sequential",
+      "params": 7077888,
+      "trainable": 7077888,
+      "frozen": 0,
+      "blocks": 6
+    },
+    {
+      "name": "backbone.body.layer4",
+      "type": "Sequential",
+      "params": 14942208,
+      "trainable": 14942208,
+      "frozen": 0,
+      "blocks": 3
+    },
+    {
+      "name": "backbone.fpn",
+      "type": "FeaturePyramidNetwork",
+      "params": 3868672,
+      "trainable": 3868672,
+      "frozen": 0
+    },
+    {
+      "name": "backbone.fpn.inner_blocks",
+      "type": "ModuleList",
+      "params": 918272,
+      "trainable": 918272,
+      "frozen": 0,
+      "blocks": 3
+    },
+    {
+      "name": "backbone.fpn.layer_blocks",
+      "type": "ModuleList",
+      "params": 1770240,
+      "trainable": 1770240,
+      "frozen": 0,
+      "blocks": 3
+    },
+    {
+      "name": "backbone.fpn.extra_blocks",
+      "type": "LastLevelP6P7",
+      "params": 1180160,
+      "trainable": 1180160,
+      "frozen": 0
+    },
+    {
+      "name": "anchor_generator",
+      "type": "AnchorGenerator",
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0
+    },
+    {
+      "name": "head",
+      "type": "RetinaNetHead",
+      "params": 4845110,
+      "trainable": 4845110,
+      "frozen": 0
+    },
+    {
+      "name": "head.classification_head",
+      "type": "RetinaNetClassificationHead",
+      "params": 2401810,
+      "trainable": 2401810,
+      "frozen": 0
+    },
+    {
+      "name": "head.classification_head.conv",
+      "type": "Sequential",
+      "params": 2360320,
+      "trainable": 2360320,
+      "frozen": 0,
+      "blocks": 4
+    },
+    {
+      "name": "head.classification_head.cls_logits",
+      "type": "Conv2d",
+      "params": 41490,
+      "trainable": 41490,
+      "frozen": 0
+    },
+    {
+      "name": "head.regression_head",
+      "type": "RetinaNetRegressionHead",
+      "params": 2443300,
+      "trainable": 2443300,
+      "frozen": 0
+    },
+    {
+      "name": "head.regression_head.conv",
+      "type": "Sequential",
+      "params": 2360320,
+      "trainable": 2360320,
+      "frozen": 0,
+      "blocks": 4
+    },
+    {
+      "name": "head.regression_head.bbox_reg",
+      "type": "Conv2d",
+      "params": 82980,
+      "trainable": 82980,
+      "frozen": 0
+    },
+    {
+      "name": "transform",
+      "type": "GeneralizedRCNNTransform",
+      "params": 0,
+      "trainable": 0,
+      "frozen": 0
+    }
+  ],
+  "tensor_flow": {
+    "stages": [
+      {
+        "stage": "transform (normalise + pad to a multiple of 32)",
+        "shape": [
+          1,
+          3,
+          1088,
+          1024
+        ]
+      },
+      {
+        "stage": "backbone.body.conv1 (7x7, stride 2)",
+        "shape": [
+          1,
+          64,
+          544,
+          512
+        ]
+      },
+      {
+        "stage": "backbone.body.maxpool (stride 4 overall)",
+        "shape": [
+          1,
+          64,
+          272,
+          256
+        ]
+      },
+      {
+        "stage": "backbone.body.layer1 = C2 (not used by the FPN)",
+        "shape": [
+          1,
+          256,
+          272,
+          256
+        ]
+      },
+      {
+        "stage": "backbone.body.layer2 = C3",
+        "shape": [
+          1,
+          512,
+          136,
+          128
+        ]
+      },
+      {
+        "stage": "backbone.body.layer3 = C4",
+        "shape": [
+          1,
+          1024,
+          68,
+          64
+        ]
+      },
+      {
+        "stage": "backbone.body.layer4 = C5",
+        "shape": [
+          1,
+          2048,
+          34,
+          32
+        ]
+      },
+      {
+        "stage": "backbone.fpn outputs (P3..P7)",
+        "shape": {
+          "0": [
+            1,
+            256,
+            136,
+            128
+          ],
+          "1": [
+            1,
+            256,
+            68,
+            64
+          ],
+          "2": [
+            1,
+            256,
+            34,
+            32
+          ],
+          "p6": [
+            1,
+            256,
+            17,
+            16
+          ],
+          "p7": [
+            1,
+            256,
+            9,
+            8
+          ]
+        }
+      },
+      {
+        "stage": "head.classification_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          136,
+          128
+        ],
+        "level": 0
+      },
+      {
+        "stage": "head.classification_head.cls_logits (per level)",
+        "shape": [
+          1,
+          18,
+          136,
+          128
+        ],
+        "level": 0
+      },
+      {
+        "stage": "head.classification_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          68,
+          64
+        ],
+        "level": 1
+      },
+      {
+        "stage": "head.classification_head.cls_logits (per level)",
+        "shape": [
+          1,
+          18,
+          68,
+          64
+        ],
+        "level": 1
+      },
+      {
+        "stage": "head.classification_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          34,
+          32
+        ],
+        "level": 2
+      },
+      {
+        "stage": "head.classification_head.cls_logits (per level)",
+        "shape": [
+          1,
+          18,
+          34,
+          32
+        ],
+        "level": 2
+      },
+      {
+        "stage": "head.classification_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          17,
+          16
+        ],
+        "level": 3
+      },
+      {
+        "stage": "head.classification_head.cls_logits (per level)",
+        "shape": [
+          1,
+          18,
+          17,
+          16
+        ],
+        "level": 3
+      },
+      {
+        "stage": "head.classification_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          9,
+          8
+        ],
+        "level": 4
+      },
+      {
+        "stage": "head.classification_head.cls_logits (per level)",
+        "shape": [
+          1,
+          18,
+          9,
+          8
+        ],
+        "level": 4
+      },
+      {
+        "stage": "head.regression_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          136,
+          128
+        ],
+        "level": 0
+      },
+      {
+        "stage": "head.regression_head.bbox_reg (per level)",
+        "shape": [
+          1,
+          36,
+          136,
+          128
+        ],
+        "level": 0
+      },
+      {
+        "stage": "head.regression_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          68,
+          64
+        ],
+        "level": 1
+      },
+      {
+        "stage": "head.regression_head.bbox_reg (per level)",
+        "shape": [
+          1,
+          36,
+          68,
+          64
+        ],
+        "level": 1
+      },
+      {
+        "stage": "head.regression_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          34,
+          32
+        ],
+        "level": 2
+      },
+      {
+        "stage": "head.regression_head.bbox_reg (per level)",
+        "shape": [
+          1,
+          36,
+          34,
+          32
+        ],
+        "level": 2
+      },
+      {
+        "stage": "head.regression_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          17,
+          16
+        ],
+        "level": 3
+      },
+      {
+        "stage": "head.regression_head.bbox_reg (per level)",
+        "shape": [
+          1,
+          36,
+          17,
+          16
+        ],
+        "level": 3
+      },
+      {
+        "stage": "head.regression_head.conv (4 conv+ReLU, per level)",
+        "shape": [
+          1,
+          256,
+          9,
+          8
+        ],
+        "level": 4
+      },
+      {
+        "stage": "head.regression_head.bbox_reg (per level)",
+        "shape": [
+          1,
+          36,
+          9,
+          8
+        ],
+        "level": 4
+      },
+      {
+        "stage": "head output (all levels, flattened over anchors)",
+        "shape": {
+          "cls_logits": [
+            1,
+            208728,
+            2
+          ],
+          "bbox_regression": [
+            1,
+            208728,
+            4
+          ]
+        }
+      }
+    ],
+    "final_detections": {
+      "boxes": [
+        0,
+        4
+      ],
+      "scores": [
+        0
+      ],
+      "labels": [
+        0
+      ]
+    }
+  },
+  "settings": {
+    "input_transform": {
+      "min_size": [
+        1024
+      ],
+      "max_size": 1080,
+      "size_divisible": 32,
+      "image_mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "image_std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    },
+    "anchors": {
+      "sizes_per_level": [
+        [
+          32,
+          40,
+          50
+        ],
+        [
+          64,
+          80,
+          101
+        ],
+        [
+          128,
+          161,
+          203
+        ],
+        [
+          256,
+          322,
+          406
+        ],
+        [
+          512,
+          645,
+          812
+        ]
+      ],
+      "aspect_ratios_per_level": [
+        [
+          0.5,
+          1.0,
+          2.0
+        ],
+        [
+          0.5,
+          1.0,
+          2.0
+        ],
+        [
+          0.5,
+          1.0,
+          2.0
+        ],
+        [
+          0.5,
+          1.0,
+          2.0
+        ],
+        [
+          0.5,
+          1.0,
+          2.0
+        ]
+      ],
+      "anchors_per_location": [
+        9,
+        9,
+        9,
+        9,
+        9
+      ]
+    },
+    "classification_loss": {
+      "name": "sigmoid_focal_loss",
+      "alpha_default": 0.25,
+      "gamma_default": 2,
+      "note": "summed over anchors, divided by the number of foreground anchors"
+    },
+    "regression_loss": {
+      "type": "l1",
+      "note": "on matched foreground anchors, divided by their number"
+    },
+    "matcher": {
+      "foreground_iou": 0.5,
+      "background_iou": 0.4,
+      "allow_low_quality_matches": true
+    },
+    "inference": {
+      "score_thresh": 0.05,
+      "nms_thresh": 0.5,
+      "detections_per_img": 300,
+      "topk_candidates": 1000
+    }
+  },
+  "environment": {
+    "python": "3.13.7",
+    "torch": "2.14.0+cpu",
+    "torchvision": "0.29.1+cpu"
+  }
+}

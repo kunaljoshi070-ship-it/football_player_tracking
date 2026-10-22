@@ -96,4 +96,12 @@ The assignment is individually assessed. Generative AI is allowed only if facult
 
 **Sources:** No new external resources; no code adapted.
 
+## 2026-10-21 — Claude (claude.ai), model description script
+
+**Prompt:** “continue” (after the AI proposed building a script that prints the real layers and tensor shapes so that the architecture document is written from the actual model).
+
+**Use:** Generated `src/soccer_tracking/describe_model.py`, `tests/test_describe_model.py` and the README section. Checks the AI ran: the NumPy shape helper test (70 tests across the repo pass, 6 skipped because torch is not installed in the AI's environment). Not run by the AI: the script itself on a real model, so none of its output has been seen by the AI yet. The student must run the tests and the script, and the architecture document must be written only from the script's real output.
+
+**Sources:** torchvision RetinaNet ResNet-50 FPN (COCO_V1 weights) as above; no code adapted.
+
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.

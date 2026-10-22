@@ -196,3 +196,14 @@ For criterion 1 (detector against the pretrained baseline on the test match) ext
 Counts and typed rows are written to `results/errors_<split>/` (`summary.json`, `errors.csv`; no pixels, safe to commit). Image panels of sampled errors (`fp_examples.jpg`, `fn_examples.jpg`: yellow = labelled players, cyan = confident detections, red = the error) go to `data/processed/errors_<split>/`, which is git-ignored because they contain frames of people: keep them local and do not upload them to AI services; describe what you see in words. **Reading the panels.** Each montage groups up to 8 randomly chosen examples (seed 0) per error type, so it is a sample for illustration, not a count: report counts and percentages from `summary.json`, and describe the panels as "k of 8 examples show ...". For each type, note what is inside the red box (a referee, substitute or staff member; an on-pitch player who has no yellow label box, which would be a labelling gap; a non-person such as a line, shadow or board; two overlapping players; a box that is too large, too small or shifted; a distant, blurred or half-hidden player) and whether the same pattern repeats.
 
 The test split needs `--allow-test` and is for a descriptive look only: never change the model, the tiling or the tracker because of what test errors show.
+
+## Model description
+
+`src/soccer_tracking/describe_model.py` builds the detector exactly as `train.py` does (torchvision RetinaNet ResNet-50 FPN, COCO weights, classification output layer replaced for 2 classes), passes one random 1024x1080 tile through it with forward hooks, and prints and saves (`results/model_description.json`) the parameter counts per component (total, trainable, frozen), which ResNet stages are frozen, the normalisation layers, every stage's output tensor shape, the anchor setup, and the loss, matching and post-processing settings read from the live model. `docs/architecture.md` is written from this output.
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m soccer_tracking.describe_model
+```
+
+The COCO weights come from the local torch cache (downloaded by the baseline run). `--weights none` works offline but builds a model with ordinary BatchNorm and every layer trainable, so it does not describe the trained configuration.
