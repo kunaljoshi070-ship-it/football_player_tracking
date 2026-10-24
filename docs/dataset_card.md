@@ -47,6 +47,24 @@ Measured on the downloaded files: every clip is 25 fps, its video frame count eq
 
 Frozen in `data/manifest.csv` before any evaluation. Only frame subsampling inside a match may be used for training speed; never split frames of one match across roles.
 
+## Data audit (measured)
+
+Produced by `python -m soccer_tracking.data audit` on the downloaded files (hashes verified against `data/manifest.csv`, also on the Colab machine). Box sizes are in pixels of the original 4096x1080 frames.
+
+| Split | Clips | Frames | Labelled boxes | Box width p5 / p50 / p95 | Box height p5 / p50 / p95 | Boxes with min(width, height) < 16 px |
+|---|---|---|---|---|---|---|
+| train | 118575, 118576 | 11,975 (479 sampled, every 25th) | 263,450 | 12.8 / 19.4 / 36.0 | 31.2 / 44.0 / 75.0 | 21.9% |
+| val | 117093 | 5,976 (240 sampled) | 131,472 | 12.7 / 20.5 / 43.4 | 31.9 / 45.7 / 86.1 | 21.3% |
+| test | 128057 | 5,976 (240 sampled) | 131,472 | 13.6 / 22.2 / 47.5 | 35.6 / 50.8 / 99.1 | 14.3% |
+
+- **Class balance.** One class (`player`). Every frame of every clip has exactly 22 labelled players, so there is no class imbalance between images; the imbalance is inside the image (about 4-6 players against 208,728 anchors per tile). The ball, referees, substitutes and staff are not labelled. The test match has larger players than the others (median height 50.8 px against 44.0 and 45.7), so scores on it are not directly comparable in difficulty.
+- **Cleaning.** No frame, clip or label was removed or edited. Ground-truth boxes are clipped to the frame for evaluation. For training, each tile keeps a box only if at least half of it is visible in the tile and it is at least 4 px in both directions; with 128 px overlap every sampled box was kept whole in at least one tile (100.00% on all three splits).
+- **Preprocessing.** Frames are decoded sequentially, stored as JPEG (quality 95) locally, cut into 1024x1080 tiles at native scale (not rescaled), and normalised with the ImageNet mean and standard deviation inside the model. Training uses every 25th frame (2,395 tiles from 479 frames).
+- **Augmentation.** Horizontal flip with probability 0.5 (training only), seeded per sample.
+- **Leakage checks done.** Splits are whole matches, so no frame of a match appears in two splits; the manifest rejects a clip listed twice or an unknown split; file hashes match the manifest; frame counts equal annotation counts for all ten clips; the test split is refused by the evaluation, training-free analysis and tuning commands unless `--allow-test` is given, and the tracker settings were frozen in a commit before the test run.
+- **Leakage checks not done.** There was no explicit search for duplicate or near-duplicate frames across matches, and it is not known whether the same teams or the same pitch appear in more than one split. If they do, test scores partly measure familiarity with the setting rather than generalisation to new ones.
+- **Label limitations.** Only the 22 players are labelled, so a correct detection of a referee or substitute counts as a false positive. In the error analysis 111 of the 146 validation false positives overlap no labelled player; they are probably such people, which would make reported precision a lower bound for "finding people on the pitch" (this still needs the visual check of the error panels).
+
 ## Risks and limitations
 
 - The full download is large; confirm selective-download behavior and disk space before retrieving data.

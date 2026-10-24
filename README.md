@@ -16,6 +16,7 @@ The selected dataset is **SoccerTrack v2, release v1.2**, using only its annotat
 - [`docs/phase1_proposal.md`](docs/phase1_proposal.md): one-page proposal and experiment hypothesis.
 - [`docs/dataset_card.md`](docs/dataset_card.md): source, access, license, and sample plan.
 - [`docs/architecture.md`](docs/architecture.md): the detector's layers, tensor shapes, frozen and trainable parts, loss, training choices and what is original.
+- [`docs/experiment_log.md`](docs/experiment_log.md): every reported run with its setup, result and record file.
 - [`data/manifest.csv`](data/manifest.csv): record only the selected dataset version, splits, clip IDs, and permitted metadata.
 - [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md): individual and prompt-wise contribution record required by the assignment.
 
@@ -208,3 +209,17 @@ python -m soccer_tracking.describe_model
 ```
 
 The COCO weights come from the local torch cache (downloaded by the baseline run). `--weights none` works offline but builds a model with ordinary BatchNorm and every layer trainable, so it does not describe the trained configuration.
+
+## Environment
+
+Python 3.13 (3.13.7 on the laptop, 3.13.15 on Colab). `requirements.txt` pins the exact versions used on the laptop (CPU) and records the Colab versions used for training and the test evaluation in its comments. To set up a clean environment and run the tests:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:PYTHONPATH = "src"
+python -m unittest discover -s tests
+```
+
+`.venv/` is git-ignored. GPU training needs a CUDA build of torch (see the note in `requirements.txt`); Colab already provides one. Extracted frames were produced separately on the laptop (OpenCV 4.13.0) and on Colab (OpenCV 4.14.0); JPEG output may differ very slightly between builds, which was not measured.

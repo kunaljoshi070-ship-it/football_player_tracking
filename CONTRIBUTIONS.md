@@ -4,13 +4,13 @@ The assignment is individually assessed. Generative AI is allowed only if facult
 
 ## Source log (consolidated)
 
-Every external resource used in the submitted work. Links marked † were written from memory and should be clicked once before submission. Licences are as stated by the resource; confirm anything marked "confirm".
+Every external resource used in the submitted work. The links were opened and checked by the student; the doi.org redirect for the CLEAR MOT paper returned 404, so the publisher's page is linked instead (the DOI is given in the entry for citation). Licences are as stated by the resource; confirm anything marked "confirm".
 
 | Resource | Type | Link | Licence or terms | Used for | Adapted? |
 |---|---|---|---|---|---|
 | SoccerTrack v2 v1.2, MOT subset: clips and labels (matches 118575, 118576, 117093 and 128057 in the experiments; all ten were downloaded, 117092 only for early tool checks) | Dataset | https://huggingface.co/datasets/atomscott/soccertrack-v2 | CC BY 4.0 (gated: access conditions accepted at download); attribution required | Training, validation and test | No. Used unmodified; frames are extracted to local JPEG files that are not committed |
 | Scott et al., SoccerTrack v2, arXiv:2508.01802 (2025) | Paper | https://arxiv.org/abs/2508.01802 | n/a | Dataset citation and split description | n/a |
-| torchvision RetinaNet (ResNet-50 FPN) with `RetinaNet_ResNet50_FPN_Weights.COCO_V1` weights | Architecture and pretrained weights | https://pytorch.org/vision/stable/models/retinanet.html † and https://download.pytorch.org/models/retinanet_resnet50_fpn_coco-eeacb38b.pth | torchvision code: BSD-3-Clause; the weights were trained on COCO (confirm the weights' terms in the torchvision model documentation) | Pretrained baseline; initialisation for fine-tuning | Only the final classification convolution is replaced (`adapt_head`); the frozen layers are torchvision's default for pretrained weights; no code copied |
+| torchvision RetinaNet (ResNet-50 FPN) with `RetinaNet_ResNet50_FPN_Weights.COCO_V1` weights | Architecture and pretrained weights | https://pytorch.org/vision/stable/models/retinanet.html and https://download.pytorch.org/models/retinanet_resnet50_fpn_coco-eeacb38b.pth | torchvision code: BSD-3-Clause; the weights were trained on COCO (confirm the weights' terms in the torchvision model documentation) | Pretrained baseline; initialisation for fine-tuning | Only the final classification convolution is replaced (`adapt_head`); the frozen layers are torchvision's default for pretrained weights; no code copied |
 | PyTorch and torchvision | Libraries | https://pytorch.org | BSD-3-Clause | Model, training, evaluation | No (public API) |
 | OpenCV (`opencv-python`) | Library | https://opencv.org | Apache-2.0 | Video decoding, JPEG files, drawing | No |
 | NumPy | Library | https://numpy.org | BSD-3-Clause | Arrays, metrics, tracker | No |
@@ -23,9 +23,9 @@ Every external resource used in the submitted work. Links marked † were writte
 | Lin et al., Microsoft COCO: Common Objects in Context, 2014 | Paper and dataset | https://arxiv.org/abs/1405.0312 | n/a (the pretrained weights were trained on it) | Origin of the pretrained weights | No |
 | Bochinski, Eiselein, Sikora, High-Speed Tracking-by-Detection Without Using Image Information, AVSS 2017 | Paper | none (conference paper) | n/a | Idea behind the IoU tracker | Re-implemented from scratch, no code |
 | Bewley et al., Simple Online and Realtime Tracking (SORT), 2016 | Paper | https://arxiv.org/abs/1602.00763 | n/a | Idea of motion prediction and association | Re-implemented from scratch (no Kalman filter), no code |
-| Bernardin and Stiefelhagen, CLEAR MOT metrics, EURASIP JIVP 2008 | Paper | https://doi.org/10.1155/2008/246309 † | n/a | Definitions of MODA, MOTA and ID switches | Definitions only; fragmentation per track is a project-specific measure |
+| Bernardin and Stiefelhagen, Evaluating Multiple Object Tracking Performance: The CLEAR MOT Metrics, EURASIP Journal on Image and Video Processing 2008, article 246309 (DOI 10.1155/2008/246309) | Paper | https://link.springer.com/article/10.1155/2008/246309 | Open access, CC BY 2.0 | Definitions of MODA, MOTA and ID switches | Definitions only; fragmentation per track is a project-specific measure |
 
-**Libraries listed in `requirements.txt` but not used by the code:** `pandas` and `PyYAML` (to be removed when the versions are pinned).
+**Dependencies:** `requirements.txt` pins the versions used (torch, torchvision, opencv-python, numpy, matplotlib); the unused `pandas` and `PyYAML` entries were removed when the versions were pinned.
 
 **Notebooks, tutorials and repositories:** none were copied or adapted. The Colab cells in the README were written by the student with AI assistance (see the entries below).
 
@@ -144,5 +144,21 @@ Every external resource used in the submitted work. Links marked † were writte
 **Use:** Wrote `docs/architecture.md` and generated `docs/figures/make_architecture_figure.py` and `docs/figures/architecture.png` from the student's real `describe_model` output; added a link in the README. The AI cross-checked the printed parameter counts by hand (frozen = conv1 9,408 + layer1 212,992 = 222,400; FPN, head and anchor totals follow from the layer definitions) and checked the figure visually (it first had overlapping labels, which were fixed). The document first marked some statements about torchvision internals as coming from the AI's knowledge; the student then ran three `inspect.getsource` commands, which confirmed that the focal loss is called with its default alpha and gamma, that both losses are divided by the number of positive anchors per image and averaged over the batch, that anchors with IoU between the two thresholds are ignored by the classification loss, and that the anchor aspect ratio is height/width. The AI then replaced the markers with these verified statements. The helper `_box_loss` was not inspected. No hyperparameter was tuned for this document; it explains values already used.
 
 **Sources:** torchvision RetinaNet ResNet-50 FPN and COCO_V1 weights; Lin et al., "Focal Loss for Dense Object Detection" (RetinaNet, 2017); Lin et al., "Feature Pyramid Networks for Object Detection" (2017); He et al., "Deep Residual Learning for Image Recognition" (2016); Lin et al., "Microsoft COCO" (2014). No code adapted.
+
+## 2026-10-21 — Claude (claude.ai), source log, dataset card audit and experiment log
+
+**Prompt:** “Continue” (twice: after the AI proposed starting with the source log and the dataset card additions).
+
+**Use:** Wrote the consolidated "Source log" section at the top of this file, replaced the unverified markers in `docs/architecture.md` with the statements the student verified, added the "Data audit (measured)" section to `docs/dataset_card.md` from the student's own `audit` output (the arithmetic was checked: boxes equal frames times 22 for every split), and wrote `docs/experiment_log.md` from the results already recorded in this conversation and the result files. No code was run by the AI for this step. The links in the source log were written partly from memory; the student opened them and reported that all worked except the doi.org link for the CLEAR MOT paper (404), which the AI replaced after confirming with a web search and by loading the publisher's page that the DOI itself is correct and the article is open access (CC BY 2.0). The experiment log's blank fields must be completed from the JSON files.
+
+**Sources:** None new.
+
+## 2026-10-21 — Claude (claude.ai), pinned requirements
+
+**Prompt:** [pasted the `pip` version listings from the laptop and from Colab; no other text]
+
+**Use:** Wrote the pinned `requirements.txt` (laptop versions pinned, Colab versions recorded in comments), removed the unused `pandas` and `PyYAML`, and added an "Environment" section to the README. The versions are copied from the student's listings and from the `environment` fields of the result files (for example the training config records OpenCV 4.14.0 on Colab). The AI did not install the file: the student should create a fresh virtual environment, install it and run the tests to confirm it works.
+
+**Sources:** None new.
 
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.

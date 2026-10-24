@@ -1,8 +1,20 @@
-# Initial Python environment; pin exact resolved versions in the first reproducible run.
-torch
-torchvision
-opencv-python
-numpy
-pandas
-matplotlib
-PyYAML
+# Phase I environment: exact versions of the packages this project imports.
+#
+# These are the versions on the student's laptop (Windows 11, Python 3.13.7, CPU only): unit tests, the pretrained
+# baseline on the validation clip, the model description and the first frame extraction ran here.
+# On Windows the PyPI torch and torchvision wheels are CPU builds; for a GPU install the matching CUDA build from
+# https://pytorch.org instead (same version numbers, different build tag).
+#
+# Training, error analysis, test evaluation and tracking ran on Google Colab (Tesla T4, Python 3.13.15) with:
+#   torch 2.11.0+cu130, torchvision 0.26.0+cu130, numpy 2.1.3, opencv 4.14.0 (opencv-contrib-python 4.14.0.94),
+#   matplotlib 3.10.0, huggingface_hub 1.33.0
+# Colab ships these preinstalled; do not reinstall torch there. Each result file in results/ and runs/ records the
+# versions of the machine that produced it.
+torch==2.14.0
+torchvision==0.29.1
+opencv-python==4.13.0.92
+numpy==2.3.2
+matplotlib==3.10.6
+
+# Optional, only used in the Colab download cell (not imported by the code):
+# huggingface_hub==1.33.0
