@@ -161,4 +161,20 @@ Every external resource used in the submitted work. The links were opened and ch
 
 **Sources:** None new.
 
+## 2026-10-21 — Claude (claude.ai), error-panel write-up
+
+**Prompt:** “the .venv commands run now and all 70 tests pass; lets skip the viva sheet for now; i have pasted my error panels descriptions: description of error panels: errors_val: fp_examples.jpg: FP duplicate: 7 of 7 images cover 2 players; FP poorly_localized: 2 of 8 images are referees with no yellow box; 6 of 8 images cover 2 players(2 of which overlap with a referee or outfield player with no yellow box); FP no_gt_overlap: 8 of 8 are match officials or outfield players with no yellow box; fn_examples.jpg: FN merged_with_neig: 8 of 8 are images where two or more players overlap into one detection; FN low_score: 1 of 8 images has an unusual pose; 1 of 8 is mostly hidden; 2 of 8 are half hidden(1 of which is blurred); 1 of 8 is distant; 3 of 8 look fine but are still missed probably due to distance or neighbour overlap; FN poorly_localized: 1 of 8 images the player is in unusual position; 7 of 8 images multiple players overlap same position(1 of which the box is too small); FN missed: in 1 of 1 image the player is distant and blurry;”
+
+**Use:** Wrote `docs/error_analysis.md` from the student's panel observations and the counts in `results/errors_val/` (the console output the student pasted earlier), updated the dataset card's label-limitation bullet, the README (project files, a summary line under Results) and the experiment log. The AI has not seen the image panels; every statement about what the panels show is the student's observation, and the interpretation (overlap as the main cause, unlabelled people among the false positives) is the AI's reading of those observations, with the unlabelled-player question left open. The student confirmed that the pinned requirements install and that all 70 tests pass in a fresh virtual environment.
+
+**Sources:** None new.
+
+## 2026-10-21 — Claude (claude.ai), Phase I summary
+
+**Prompt:** “Let's leave the snapshot for now; Give me a summary of whatever we have done so far, explain the Baseline, dataset, literature review, comparison with baseline, justification of our model being better than baseline among other things”
+
+**Use:** Wrote `docs/phase1_summary.md` from the project's own documents and results. The "Background" section is a plain summary of the papers already in the source log, not a formal literature review (none was written; the document says so). The AI's descriptions of those papers come from its own knowledge and were not re-checked against the papers. The provisional intended-use paragraph is the AI's draft and should be reviewed by the student.
+
+**Sources:** None new.
+
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.

@@ -17,6 +17,8 @@ The selected dataset is **SoccerTrack v2, release v1.2**, using only its annotat
 - [`docs/dataset_card.md`](docs/dataset_card.md): source, access, license, and sample plan.
 - [`docs/architecture.md`](docs/architecture.md): the detector's layers, tensor shapes, frozen and trainable parts, loss, training choices and what is original.
 - [`docs/experiment_log.md`](docs/experiment_log.md): every reported run with its setup, result and record file.
+- [`docs/phase1_summary.md`](docs/phase1_summary.md): plain-language summary of the whole of Phase I (dataset, background, method, baseline comparison, tracking study, errors, limits).
+- [`docs/error_analysis.md`](docs/error_analysis.md): typed errors of the fine-tuned and pretrained detector on validation, with the reviewed image panels.
 - [`data/manifest.csv`](data/manifest.csv): record only the selected dataset version, splits, clip IDs, and permitted metadata.
 - [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md): individual and prompt-wise contribution record required by the assignment.
 
@@ -154,6 +156,8 @@ Criterion 1 (test: at least +0.10 AP50 and +0.15 AP75 over the pretrained model)
 
 Criterion 2 (test: interruptions per track at least 25% lower, F1 lower by at most 0.02): **49.0% lower** (all 3 segments improved) and **F1 0.015 lower**, **met**. Read this together with the cost: the tracker bridges one-frame misses, which removes interruptions, but it also adds false-positive boxes (MODA falls by 0.037 on test) and its ids are not reliable (about 3 different ids per player in 10 seconds, 140 switches). The tracks are image-plane continuity aids, not player identities. Limits: one validation and one test match, three segments each, small counts (102 versus 52 interruptions on test), a deliberately simple tracker.
 
+**Errors (validation, fine-tuned):** 44 of 1,056 players missed and 146 false positives. Overlapping players cause most problems on both sides (37 of the 44 misses are crowded players; the duplicate and many poorly placed false positives are one box over two players), and in the reviewed samples the "false positives" that overlap no labelled player were match officials or unlabelled people. Details in [`docs/error_analysis.md`](docs/error_analysis.md).
+
 **Runtime:** pretrained model on the laptop CPU about 20 s per frame (5 tiles); fine-tuned model on a Colab T4 about 1.1 s per frame including video decoding.
 
 ## Tracking comparison (detector-only vs IoU tracker)
@@ -221,5 +225,7 @@ pip install -r requirements.txt
 $env:PYTHONPATH = "src"
 python -m unittest discover -s tests
 ```
+
+If PowerShell refuses to run `Activate.ps1` ("running scripts is disabled on this system"), either allow scripts for that window only with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` (it resets when the window closes) or skip activation and call the environment's Python directly: `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` and `.\.venv\Scripts\python.exe -m unittest discover -s tests`.
 
 `.venv/` is git-ignored. GPU training needs a CUDA build of torch (see the note in `requirements.txt`); Colab already provides one. Extracted frames were produced separately on the laptop (OpenCV 4.13.0) and on Colab (OpenCV 4.14.0); JPEG output may differ very slightly between builds, which was not measured.
