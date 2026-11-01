@@ -34,3 +34,6 @@ venv/
 .idea/
 Thumbs.db
 Desktop.ini
+
+#bs
+/dump
