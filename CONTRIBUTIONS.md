@@ -24,6 +24,16 @@ Every external resource used in the submitted work. The links were opened and ch
 | Bochinski, Eiselein, Sikora, High-Speed Tracking-by-Detection Without Using Image Information, AVSS 2017 | Paper | none (conference paper) | n/a | Idea behind the IoU tracker | Re-implemented from scratch, no code |
 | Bewley et al., Simple Online and Realtime Tracking (SORT), 2016 | Paper | https://arxiv.org/abs/1602.00763 | n/a | Idea of motion prediction and association | Re-implemented from scratch (no Kalman filter), no code |
 | Bernardin and Stiefelhagen, Evaluating Multiple Object Tracking Performance: The CLEAR MOT Metrics, EURASIP Journal on Image and Video Processing 2008, article 246309 (DOI 10.1155/2008/246309) | Paper | https://link.springer.com/article/10.1155/2008/246309 | Open access, CC BY 2.0 | Definitions of MODA, MOTA and ID switches | Definitions only; fragmentation per track is a project-specific measure |
+| Jian et al., GTATrack: Winner Solution to SoccerTrack 2025, ACM MMSports '25, pp. 180-188 | Published paper (the comparator) | https://doi.org/10.1145/3728423.3759416 (code: https://github.com/ron941/GTATrack-STC2025) | CC BY 4.0 | Published baseline and literature comparison in `docs/gtatrack_comparison.md` | None; described and compared only |
+| Huang et al., Iterative Scale-Up ExpansionIoU and Deep Features Association for Multi-Object Tracking in Sports (Deep-EIoU), WACV Workshops 2024 | Paper | https://openaccess.thecvf.com/content/WACV2024W/RWS/html/Huang_Iterative_Scale-Up_ExpansionIoU_and_Deep_Features_Association_for_Multi-Object_Tracking_WACVW_2024_paper.html | n/a | Tracker used inside GTATrack, described in the comparison | None |
+| Sun, Huang, Yang, Jiang, Hwang, GTA: Global Tracklet Association for Multi-Object Tracking in Sports, ACCV Workshops 2024, pp. 421-434 | Paper (workshop proceedings) | https://openaccess.thecvf.com/content/ACCV2024W/MLCSA2024/html/Sun_GTA_Global_Tracklet_Association_for_Multi-Object_Tracking_in_Sports_ACCVW_2024_paper.html (also https://arxiv.org/abs/2411.08216) | n/a | Global refinement used inside GTATrack | None |
+| Zhou et al., Omni-Scale Feature Learning for Person Re-Identification (OSNet), 2019 | Paper | https://arxiv.org/abs/1905.00953 | n/a | Appearance model used inside GTATrack | None |
+| Zhang et al., ByteTrack: Multi-Object Tracking by Associating Every Detection Box, ECCV 2022 | Paper | https://arxiv.org/abs/2110.06864 | n/a | Baseline in GTATrack's ablation; two-threshold association idea | None |
+| Luiten et al., HOTA: A Higher Order Metric for Evaluating Multi-Object Tracking, IJCV 2021 | Journal paper | https://doi.org/10.1007/s11263-020-01375-2 | n/a | Metric of the challenge and the comparison | None |
+| Akyon, Altinuc, Temizel, Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection (SAHI), ICIP 2022 | Paper | https://arxiv.org/abs/2202.06934 | n/a | Prior art for our tiling approach | None |
+| Bodla et al., Soft-NMS, ICCV 2017 | Paper | https://openaccess.thecvf.com/content_iccv_2017/html/Bodla_Soft-NMS_--_Improving_ICCV_2017_paper.html | n/a | Idea for crowded players (not implemented) | None |
+| Chu et al., Detection in Crowded Scenes: One Proposal, Multiple Predictions, CVPR 2020 | Paper | https://openaccess.thecvf.com/content_CVPR_2020/html/Chu_Detection_in_Crowded_Scenes_One_Proposal_Multiple_Predictions_CVPR_2020_paper.html | n/a | Idea for crowded players (not implemented) | None |
+| Ultralytics YOLOv11 | Software (detector used by GTATrack) | https://github.com/ultralytics/ultralytics | See repository | Described in the comparison; not used by us | None |
 
 **Dependencies:** `requirements.txt` pins the versions used (torch, torchvision, opencv-python, numpy, matplotlib); the unused `pandas` and `PyYAML` entries were removed when the versions were pinned.
 
@@ -176,5 +186,21 @@ Every external resource used in the submitted work. The links were opened and ch
 **Use:** Wrote `docs/phase1_summary.md` from the project's own documents and results. The "Background" section is a plain summary of the papers already in the source log, not a formal literature review (none was written; the document says so). The AI's descriptions of those papers come from its own knowledge and were not re-checked against the papers. The provisional intended-use paragraph is the AI's draft and should be reviewed by the student.
 
 **Sources:** None new.
+
+## 2026-10-21 — Claude (claude.ai), GTATrack explanation and comparison document
+
+**Prompt:** “explain to me working of gtatrack in detail(dont just name things used but also tell what they do) and what we can do to possibly get a better result(i know its not certain; just list possible ways our version could do better); create a doc for this if it gets too long; also explain what we have already done and acheived”
+
+**Use:** Wrote `docs/gtatrack_comparison.md` and added the related papers to the source log. The paper's content was read from its full text (arXiv copy of the ACM paper, with the ACM DOI and pages confirmed by search); explanations of what each component does are marked (paper) or (background) in the document, and the (background) ones come from the AI's general knowledge and were not checked against the Deep-EIoU and GTA-Link papers. After writing, the AI re-read the paper's full text, confirmed the numbers and corrected the document (leaderboard ranks, the Table 4 inconsistency, the Connector/Splitter note); the GTA-Link authors and venue were confirmed by search. The lists of possible improvements are ideas, none implemented or tested. No code was run.
+
+**Sources:** The papers listed in the source log above (added in this step).
+
+## 2026-10-21 — Claude (claude.ai), Phase II game plan
+
+**Prompt:** “lets start with phase 2 now; i have selected gtatrack to be the baseline article to compare our work against, so let us try our best to beat it; generate a gameplan for phase 2; also from now on whenever you finish(or before cutoff) just tell me what work you have done, what to do next and the files you have edited; so that other models can take over;”
+
+**Use:** Wrote `docs/phase2_plan.md` (targets, rubric map, protocol and splits, workstreams, gates, risks, handoff protocol, status board), updated `AGENTS.md` (Phase I frozen, Phase II rules, evaluation discipline, handoff duty) and the README (current phase, link). The targets are proposals for the student to adjust before the first full evaluation. The plan's compute and effort estimates are the AI's estimates, not measurements. It was not possible to open GTATrack's code repository to check whether weights are released (a summary site says it contains detection, tracking and training scripts); gate G2 in the plan is the check. No code was run.
+
+**Sources:** GTATrack and related papers are already in the source log. TrackEval, torchreid and Ultralytics YOLO are mentioned as candidates and would be added to the source log (with licences to be confirmed) when used.
 
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.

@@ -57,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True, help="mixed precision (CUDA only)")
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--train-clips", nargs="+", default=None, help="Phase II: explicit training clip ids (role 'train')")
+    p.add_argument("--val-clips", nargs="+", default=None, help="Phase II: explicit validation clip ids (role 'val')")
+    p.add_argument("--select-metric", choices=("ap50", "ap75", "mean"), default="ap50",
+                   help="validation metric for early stopping and best.pt (mean = (AP50 + AP75) / 2)")
     p.add_argument("--device", default="auto")
     p.add_argument("--log-every", type=int, default=20, help="write an iterations.csv row every N iterations")
     p.add_argument("--max-iters-per-epoch", type=int, default=None, help="cap iterations per epoch (smoke tests)")
@@ -119,6 +123,15 @@ def plot_curves(out_dir: Path) -> Optional[Path]:
     return path
 
 
+def select_value(val: dict, metric: str) -> float:
+    """The validation number that decides 'best' and early stopping."""
+    if metric == "ap50":
+        return val["ap50"]
+    if metric == "ap75":
+        return val["ap75"]
+    return 0.5 * (val["ap50"] + val["ap75"])
+
+
 def run(args: argparse.Namespace) -> dict:
     import torch
     from torch.utils.data import DataLoader
@@ -137,8 +150,12 @@ def run(args: argparse.Namespace) -> dict:
     use_amp = bool(args.amp and device.type == "cuda")
     tile = tuple(args.tile)
 
-    train_clips = load_manifest(args.manifest, ["train"])
-    val_clips = load_manifest(args.manifest, ["val"])
+    if args.train_clips or args.val_clips:
+        from .phase2 import training_clips
+        train_clips, val_clips = training_clips(args.manifest, args.train_clips, args.val_clips)
+    else:
+        train_clips = load_manifest(args.manifest, ["train"])
+        val_clips = load_manifest(args.manifest, ["val"])
     dataset = SoccerTilesDataset(train_clips, args.frames_root, stride=args.stride, tile=tile,
                                  overlap=args.overlap, augment=True, seed=args.seed)
     gen = torch.Generator()
@@ -217,9 +234,10 @@ def run(args: argparse.Namespace) -> dict:
                "val_recall": val.get("recall", float("nan")), "val_f1": val.get("f1", float("nan")),
                "lr_end": lr, "seconds": time.time() - t0}
         _append_row(out_dir / "metrics.csv", EPOCH_COLS, row)
-        improved = val["ap50"] > best + 1e-4
+        sel = select_value(val, args.select_metric)
+        improved = sel > best + 1e-4
         if improved:
-            best, bad = val["ap50"], 0
+            best, bad = sel, 0
         else:
             bad += 1
         state = {"model": model.state_dict(), "optimizer": optimizer.state_dict(), "epoch": epoch + 1,
@@ -234,7 +252,7 @@ def run(args: argparse.Namespace) -> dict:
             break
 
     rows = _read_csv(out_dir / "metrics.csv")
-    best_row = max(rows, key=lambda r: float(r["val_ap50"])) if rows else {}
+    best_row = max(rows, key=lambda r: select_value({"ap50": float(r["val_ap50"]), "ap75": float(r["val_ap75"])}, args.select_metric)) if rows else {}
     summary = {"best_epoch": int(best_row["epoch"]) if best_row else None, "best_val_ap50": best,
                "epochs_run": len(rows), "iterations": iteration, "run_dir": str(out_dir)}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

@@ -2,7 +2,7 @@
 
 **Project:** Sports Player Tracking and Tactical Event Analyzer
 **Language:** Python (professor-approved)
-**Current phase:** Phase I only
+**Current phase:** Phase II (Phase I is finished and frozen; see `docs/phase2_plan.md`)
 
 ## Phase I scope
 
@@ -17,6 +17,8 @@ The selected dataset is **SoccerTrack v2, release v1.2**, using only its annotat
 - [`docs/dataset_card.md`](docs/dataset_card.md): source, access, license, and sample plan.
 - [`docs/architecture.md`](docs/architecture.md): the detector's layers, tensor shapes, frozen and trainable parts, loss, training choices and what is original.
 - [`docs/experiment_log.md`](docs/experiment_log.md): every reported run with its setup, result and record file.
+- [`docs/phase2_plan.md`](docs/phase2_plan.md): Phase II game plan to beat GTATrack: targets, protocol, workstreams, gates, risks, handoff protocol and status board.
+- [`docs/gtatrack_comparison.md`](docs/gtatrack_comparison.md): how the published GTATrack paper works, what we have achieved, and ways our version could do better.
 - [`docs/phase1_summary.md`](docs/phase1_summary.md): plain-language summary of the whole of Phase I (dataset, background, method, baseline comparison, tracking study, errors, limits).
 - [`docs/error_analysis.md`](docs/error_analysis.md): typed errors of the fine-tuned and pretrained detector on validation, with the reviewed image panels.
 - [`data/manifest.csv`](data/manifest.csv): record only the selected dataset version, splits, clip IDs, and permitted metadata.
