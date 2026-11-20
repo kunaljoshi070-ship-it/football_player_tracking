@@ -69,6 +69,23 @@ def select_clips(role: Optional[str], clips: Optional[Sequence[str]], allow_test
             raise ValueError(f"clip {c} is a reserve clip, kept for the live unseen test: pass --allow-reserve only then")
     return ids
 
+def training_clips(manifest, train_ids=None, val_ids=None):
+    """Phase II training and validation Clip objects; test and reserve clips are refused."""
+    from .data import ManifestError, load_manifest
+    by_id = {c.clip_id: c for c in load_manifest(manifest)}
+
+    def pick(ids, role):
+        ids = list(ids) if ids else list(PHASE2_ROLES[role])
+        bad = [i for i in ids if i not in PHASE2_ROLES[role]]
+        if bad:
+            raise ManifestError(f"clip(s) {bad} are not Phase II {role} clips {PHASE2_ROLES[role]}")
+        absent = [i for i in ids if i not in by_id]
+        if absent:
+            raise ManifestError(f"clip(s) {absent} not in the manifest")
+        return [by_id[i] for i in ids]
+
+    return pick(train_ids, "train"), pick(val_ids, "val")
+
 
 def build_arm(dets, arm: str, score: float, params: Optional[dict] = None):
     """Per-frame ``(ids, boxes)`` predictions and score arrays for one arm.
@@ -116,7 +133,7 @@ def cmd_detect(args) -> None:
     by_id = {c.clip_id: c for c in load_manifest(args.manifest)}
     torch.manual_seed(args.seed)
     device = torch.device("cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device))
-    model = build_retinanet(args.weights, tuple(args.tile), args.score_floor, 0.5).to(device)
+    model = build_retinanet(args.weights, tuple(args.tile), args.score_floor, args.nms_thresh).to(device)
     det_dir = Path(args.det_root) / args.run
     for cid in ids:
         clip = by_id[cid]
@@ -158,12 +175,15 @@ def cmd_score(args) -> None:
         if problems:
             raise ValueError("; ".join(problems))
         dets = assemble(det_dir, cid, plan)
+        if args.static_frac > 0:
+            from .postfilter import suppress_static
+            dets = suppress_static([(b, s) for b, s in dets], args.static_window, 5, args.static_frac, args.static_iou, args.score)
         preds, sc = build_arm(dets, args.arm, args.score, params)
         name = f"{cid}_{info['start']}_{info['end']}"
         seqs[name] = {"gt": gt_sequence(clip, ann, info["start"], n), "pred": preds, "scores": sc, "width": clip.width, "height": clip.height}
         meta[name] = {"clip_id": cid, "role": role_of(cid), "start": info["start"], "end": info["end"], "frames": n}
     res = evaluate_sequences(seqs, use_trackeval=not args.no_trackeval)
-    record = {"run": args.run, "arm": args.arm, "score": args.score, "tracker_params": params, "sequences": meta, "results": res,
+    record = {"run": args.run, "arm": args.arm, "score": args.score, "tracker_params": params, "postfilter": {"static_frac": args.static_frac, "window": args.static_window, "iou": args.static_iou}, "sequences": meta, "results": res,
               "note": "mean_over_seqs is the Challenge-style per-clip mean; pooled sums counts. 'detector' arm ids are unique per box (AssA not meaningful). "
                       "Report TrackEval numbers; 'reference' is the NumPy cross-check.",
               "environment": _env(args.manifest)}
@@ -198,6 +218,7 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--overlap", type=int, default=128)
     d.add_argument("--score-floor", type=float, default=0.05)
     d.add_argument("--merge-iou", type=float, default=0.5)
+    d.add_argument("--nms-thresh", type=float, default=0.5, help="NMS inside the detector, per tile (Phase I: 0.5)")
     d.add_argument("--drop-edge-px", type=float, default=2.0)
     d.add_argument("--batch-size", type=int, default=2)
     d.add_argument("--device", default="auto")
@@ -207,6 +228,9 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--params", type=Path, default=Path("results") / "tracker_tuning.json")
     e.add_argument("--score", type=float, default=0.5)
     e.add_argument("--no-trackeval", action="store_true", help="NumPy reference only")
+    e.add_argument("--static-frac", type=float, default=0.0, help="0 = off; else drop boxes static in this share of +-window/2 (e.g. 0.9)")
+    e.add_argument("--static-window", type=int, default=250)
+    e.add_argument("--static-iou", type=float, default=0.8)
     e.add_argument("--out", type=Path, default=None)
     return p
 
