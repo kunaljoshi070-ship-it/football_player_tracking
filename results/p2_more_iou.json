@@ -76,18 +76,61 @@
         "n_pred": 43965
       }
     },
-    "trackeval": null,
-    "trackeval_error": "TrackEval is not importable: clone https://github.com/JonathonLuiten/TrackEval and add it to PYTHONPATH (needs numpy and scipy)"
+    "trackeval": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.39588786686768523,
+          "DetA": 0.5890342040732365,
+          "AssA": 0.27380687319844843,
+          "LocA": 0.8426416878624796,
+          "FP": 2976.0,
+          "FN": 3757.0,
+          "IDSW": 522.0,
+          "IDF1": 0.36201670561558574
+        },
+        "128058_1000_2000": {
+          "HOTA": 0.6099334272845747,
+          "DetA": 0.8019532694212335,
+          "AssA": 0.46567198882113336,
+          "LocA": 0.8914995900683512,
+          "FP": 1297.0,
+          "FN": 551.0,
+          "IDSW": 163.0,
+          "IDF1": 0.5990703079604881
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.50291064707613,
+        "DetA": 0.6954937367472349,
+        "AssA": 0.3697394310097909,
+        "LocA": 0.8670706389654155,
+        "FP": 2136.5,
+        "FN": 2154.0,
+        "IDSW": 342.5,
+        "IDF1": 0.4805435067880369
+      },
+      "pooled": {
+        "HOTA": 0.5092343223416421,
+        "DetA": 0.6895891445216001,
+        "AssA": 0.38099790721840743,
+        "LocA": 0.8692625548945885,
+        "FP": 4273.0,
+        "FN": 4308.0,
+        "IDSW": 685.0,
+        "IDF1": 0.4826010345023589
+      }
+    },
+    "trackeval_error": null
   },
   "note": "mean_over_seqs is the Challenge-style per-clip mean; pooled sums counts. 'detector' arm ids are unique per box (AssA not meaningful). Report TrackEval numbers; 'reference' is the NumPy cross-check.",
   "environment": {
-    "utc": "2026-11-20T16:34:29+00:00",
+    "utc": "2026-11-20T17:16:03+00:00",
     "python": "3.13.16",
     "numpy": "2.4.6",
     "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
     "git_revision": "635275e668ff860bf5500535a3cef094ceb7db7f",
-    "git_dirty": false,
+    "git_dirty": true,
     "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
-    "command": "/content/repo/src/soccer_tracking/phase2.py score --role val --run p2more --arm iou --det-root /content/drive/MyDrive/soccer_runs/detections_p2 --out /content/drive/MyDrive/soccer_runs/results/p2_more_iou.json"
+    "command": "/content/repo/src/soccer_tracking/phase2.py score --role val --run p2more --arm iou --det-root /content/drive/MyDrive/soccer_runs/detections_p2 --out results/p2_more_iou.json"
   }
 }
