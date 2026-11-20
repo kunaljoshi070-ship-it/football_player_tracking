@@ -1,0 +1,7 @@
+{
+  "best_epoch": 4,
+  "best_val_ap50": 0.9248281065209822,
+  "epochs_run": 6,
+  "iterations": 8994,
+  "run_dir": "/content/drive/MyDrive/soccer_runs/p2_more_data"
+}

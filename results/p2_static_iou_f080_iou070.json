@@ -1,0 +1,136 @@
+{
+  "run": "p1model_t0",
+  "arm": "iou",
+  "score": 0.5,
+  "tracker_params": {
+    "iou_thr": 0.4,
+    "max_age": 1,
+    "min_hits": 1,
+    "use_velocity": true
+  },
+  "postfilter": {
+    "static_frac": 0.8,
+    "window": 250,
+    "iou": 0.7
+  },
+  "sequences": {
+    "117093_1000_2000": {
+      "clip_id": "117093",
+      "role": "val",
+      "start": 1000,
+      "end": 2000,
+      "frames": 1000
+    },
+    "128058_1000_2000": {
+      "clip_id": "128058",
+      "role": "val",
+      "start": 1000,
+      "end": 2000,
+      "frames": 1000
+    }
+  },
+  "results": {
+    "reference": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.2820994278292458,
+          "DetA": 0.522954447022612,
+          "AssA": 0.15841456470177695,
+          "LocA": 0.8309104308837978,
+          "HOTA_at_0.5": 0.3179928745379427,
+          "FN_at_0.5": 6016.0,
+          "FP_at_0.5": 4027.0,
+          "n_gt": 22000,
+          "n_pred": 20011,
+          "IDSW": 608
+        },
+        "128058_1000_2000": {
+          "HOTA": 0.574707539038,
+          "DetA": 0.7408135650191915,
+          "AssA": 0.4481831261165058,
+          "LocA": 0.884969203166088,
+          "HOTA_at_0.5": 0.641752712706235,
+          "FN_at_0.5": 819.0,
+          "FP_at_0.5": 3067.0,
+          "n_gt": 22000,
+          "n_pred": 24248,
+          "IDSW": 184
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.4284034834336229,
+        "DetA": 0.6318840060209017,
+        "AssA": 0.30329884540914137,
+        "LocA": 0.8579398170249428,
+        "IDSW": 396.0
+      },
+      "pooled": {
+        "HOTA": 0.44980857012811076,
+        "DetA": 0.6287856385915644,
+        "AssA": 0.3274348484786792,
+        "LocA": 0.8614803848768267,
+        "HOTA_at_0.5": 0.5035512848303055,
+        "FN_at_0.5": 6835.0,
+        "FP_at_0.5": 7094.0,
+        "n_gt": 44000,
+        "n_pred": 44259
+      }
+    },
+    "trackeval": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.2820913814572842,
+          "DetA": 0.522948401110317,
+          "AssA": 0.15840338780706523,
+          "LocA": 0.8309124378174508,
+          "FP": 3447.0,
+          "FN": 5436.0,
+          "IDSW": 609.0,
+          "IDF1": 0.2377472566708719
+        },
+        "128058_1000_2000": {
+          "HOTA": 0.5747035107815645,
+          "DetA": 0.7408104550750167,
+          "AssA": 0.4481775030382219,
+          "LocA": 0.8849692676324689,
+          "FP": 2880.0,
+          "FN": 632.0,
+          "IDSW": 184.0,
+          "IDF1": 0.5674191316381249
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.4283974461194243,
+        "DetA": 0.631879428092667,
+        "AssA": 0.30329044542264355,
+        "LocA": 0.8579408527249599,
+        "FP": 3163.5,
+        "FN": 3034.0,
+        "IDSW": 396.5,
+        "IDF1": 0.4025831941544984
+      },
+      "pooled": {
+        "HOTA": 0.4498035545721905,
+        "DetA": 0.6287809790449937,
+        "AssA": 0.32742844934663656,
+        "LocA": 0.8614811275348581,
+        "FP": 6327.0,
+        "FN": 6068.0,
+        "IDSW": 793.0,
+        "IDF1": 0.4104963799725807
+      }
+    },
+    "trackeval_error": null
+  },
+  "note": "mean_over_seqs is the Challenge-style per-clip mean; pooled sums counts. 'detector' arm ids are unique per box (AssA not meaningful). Report TrackEval numbers; 'reference' is the NumPy cross-check.",
+  "environment": {
+    "utc": "2026-11-20T06:23:19+00:00",
+    "python": "3.13.7",
+    "numpy": "2.3.2",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "git_revision": "3729553fc20531530564e604a5ba0db6283060d7",
+    "git_dirty": true,
+    "manifest_sha256": "20fa67c58725013d6077b5ce43d389c985dee04aa1e948b7dcd48eee78b1a3a7",
+    "command": "C:\\Users\\Acer\\Desktop\\football_player_tracking\\src\\soccer_tracking\\phase2.py score --role val --run p1model_t0 --det-root data/processed/detections_p2 --arm iou --static-frac 0.8 --static-iou 0.7 --static-window 250 --score 0.5 --out results/p2_static_iou_f080_iou070.json"
+  }
+}
