@@ -1,6 +1,6 @@
 # Phase II game plan: beat GTATrack on SoccerTrack
 
-Status: **plan written, nothing in Phase II has been run yet.** The "Status board" (section 9) is updated at the end of every working session; read it first if you are picking this project up (human or AI).
+Status: **Phase II underway. T0 has been completed on two 1,000-frame validation windows; full-clip T0 and model-improvement experiments are pending.** The "Status board" (section 9) is updated at the end of every working session; read it first if you are picking this project up (human or AI).
 
 ## 1. Goal and what "beat" means
 
@@ -149,15 +149,19 @@ Conventions: Phase I results and the Phase I split are frozen; new runs get new 
 
 ## 9. Status board
 
+**T0 window record (2026-11-19):** Phase I `best.pt` with the Phase I IoU tracker, TrackEval, frames 1000–1999 of validation clips 117093 and 128058. Tracker-arm mean: HOTA 0.479, DetA 0.649, AssA 0.360, LocA 0.858, FP 3,466, FN 2,172, IDSW 371.5. Detector-only: DetA 0.669, FP 2,938, FN 2,281; detector-only identity metrics are not meaningful because every detection receives a unique ID. These are partial-window development results, not full-clip results and not a matched-protocol comparison with GTATrack. The supplied verification report states NumPy-reference/TrackEval agreement within about 0.0002 for HOTA, DetA, AssA and LocA, with IDSW within 1; report TrackEval FP/FN only because the reference and TrackEval use different matching rules.
+
 | Item | Status |
 |---|---|
 | Phase II plan written | done (this file) |
 | D1-D4 decisions | open |
 | Phase I snapshot (tag and folder) | deferred |
 | Panel feedback recorded | not started (needs the student) |
-| WS-A harness (TrackEval, full-clip inference) | not started |
+| WS-A harness (TrackEval, full-clip inference) | in progress: self-test and 87 unit tests reported passing; TrackEval/reference agreement verified on two real validation windows; full-clip T0 pending |
+| T0 validation-window baseline | complete: frames 1000–1999 on validation clips 117093 and 128058; development-window result only |
+| G1 full-clip gate | partial: harness self-test and window baseline reported passing; full validation-clip evaluation remains pending |
 | G2 GTATrack code check | not started |
-| WS-B detector | not started |
+| WS-B detector | postfilter.py implementation committed; its effect is not yet measured; four-clip training not started |
 | WS-C tracker | not started |
 | WS-D ablation | not started |
 | WS-E product | not started |

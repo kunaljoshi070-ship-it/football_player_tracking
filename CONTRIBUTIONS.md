@@ -204,3 +204,23 @@ Every external resource used in the submitted work. The links were opened and ch
 **Sources:** GTATrack and related papers are already in the source log. TrackEval, torchreid and Ultralytics YOLO are mentioned as candidates and would be added to the source log (with licences to be confirmed) when used.
 
 For future AI use, add the exact prompt, date/tool, output used, edits made, and your own verification. Also record datasets, pretrained weights, papers, tutorials, repositories, and adapted code with sources and licenses.
+
+## 2026-11-20 — AI agent (tool/model not identified), T0 review and static-filter draft
+
+**Prompt:** The student supplied the T0 verification output and asked for interpretation and the next Phase II step.
+
+**Use:** Interpreted the reported T0 window metrics and provided a `suppress_static` post-filter draft. The current `src/soccer_tracking/postfilter.py` follows that draft. The filter has not yet been evaluated; its possible reduction of static false positives and risk to stationary goalkeepers remain hypotheses.
+
+**Verification:** The attached report says the agent checked NumPy-reference results against TrackEval on two real validation windows and found agreement within the stated tolerances. The student separately reported that the HOTA self-test and 87 unit tests passed. This Codex session did not rerun those experiments. The T0 window measurements and verification are reported evidence, not work run by this assistant.
+
+**Sources:** TrackEval; no new external sources.
+
+## 2026-11-20 — ChatGPT (Codex), Phase II status and training handoff
+
+**Prompt:** “i have completed the t0 run and got it verified by the agent; agent output is attached; can you update the phase2plan status and contributions.md as per the this and the previous output(not yours but the agents'); also help me setup step 2(i have already made postfilter.py and committed the files)” (plus the attached T0 report).
+
+**Use:** Updated the Phase II status board and recorded the reported window-level T0 results and limitations. Provided Colab setup guidance for the committed four-clip training path; no project code or experiment was run by this assistant.
+
+**Verification:** Read the current plan, contribution log, training/data code, manifest, and `postfilter.py`, and used the supplied agent report. No tests or training were run in this session.
+
+**Sources:** Existing project files and the student-supplied agent report; no new external sources.
