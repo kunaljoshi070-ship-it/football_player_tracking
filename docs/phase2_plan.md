@@ -1,6 +1,6 @@
 # Phase II game plan: beat GTATrack on SoccerTrack
 
-Status: **Phase II underway. T0 has been completed on two 1,000-frame validation windows; full-clip T0 and model-improvement experiments are pending.** The "Status board" (section 9) is updated at the end of every working session; read it first if you are picking this project up (human or AI).
+Status: **Phase II underway. Full-clip validation scoring is complete for T0 and P2-more with the IoU and IoU-v2 trackers. P2-more improves HOTA over T0 on this validation pair, but the results remain development evidence. C4 tuning selected a 22-detection cap; its frozen confirmation window is pending.** See section 9 for detailed state.
 
 ## 1. Goal and what "beat" means
 
@@ -152,20 +152,22 @@ Conventions: Phase I results and the Phase I split are frozen; new runs get new 
 **T0 window record (2026-11-19):** Phase I `best.pt` with the Phase I IoU tracker, TrackEval, frames 1000–1999 of validation clips 117093 and 128058. Tracker-arm mean: HOTA 0.479, DetA 0.649, AssA 0.360, LocA 0.858, FP 3,466, FN 2,172, IDSW 371.5. Detector-only: DetA 0.669, FP 2,938, FN 2,281; detector-only identity metrics are not meaningful because every detection receives a unique ID. These are partial-window development results, not full-clip results and not a matched-protocol comparison with GTATrack. The supplied verification report states NumPy-reference/TrackEval agreement within about 0.0002 for HOTA, DetA, AssA and LocA, with IDSW within 1; report TrackEval FP/FN only because the reference and TrackEval use different matching rules.
 
 **Phase II update (2026-11-20):** P2-more training and TrackEval scoring are complete on the two fixed validation windows. Mean IoU-tracker HOTA rose from T0 0.4788 to P2-more 0.5029; detector DetA rose from 0.6694 to 0.7126. These remain development results because these validation clips also selected the training epoch. B3 used the P2-more checkpoint, NMS 0.7 and merge IoU 0.7 on 117093; against P2-more on that same window, misses fell but FP rose sharply and tracker HOTA fell (0.3959 to 0.3739). Because both thresholds changed together, their individual effects are unknown. The static-filter sweep was rejected because it increased misses and lowered tracker HOTA. Detailed results are in the README and `results/p2_*.json`.
+
+**Phase II update (2026-11-21):** Full validation clips 117093 and 128058 were scored with TrackEval for T0 (`p1model_full`) and P2-more (`p2more_full`), using both the Phase I IoU tracker and IoU-v2. With IoU-v2 held fixed, P2-more mean HOTA was 0.3681 versus T0 0.3439; mean DetA was 0.7613 versus 0.7175. This is validation-only development evidence, not a GTATrack-matched or held-out result. Isolated threshold runs on the 117093 window showed NMS 0.7 / merge IoU 0.5 slightly raised HOTA (0.3959 to 0.3988) while raising FN; merge IoU 0.7 / NMS 0.5 did not improve HOTA (0.3953). The C4 roster-cap sweep and TrackEval rescore selected pre-tracking cap K=22 (mean HOTA 0.53924 on its tuning windows); the amendment's separate confirmation window is still pending. See `docs/experiment_log.md` and the named JSON records for full metrics.
 | Item | Status |
 |---|---|
 | Phase II plan written | done (this file) |
 | D1-D4 decisions | decided; see section 7 |
 | Phase I snapshot (tag and folder) | deferred |
 | Panel feedback recorded | not started (needs the student) |
-| WS-A harness (TrackEval, full-clip inference) | in progress: self-test and 87 unit tests reported passing; TrackEval/reference agreement verified on two real validation windows; full-clip T0 pending |
+| WS-A harness (TrackEval, full-clip inference) | complete for validation: self-test and 87 unit tests reported passing; TrackEval/reference agreement checked on two real validation windows; full-clip T0 and P2-more scored on both validation clips with IoU and IoU-v2 |
 | T0 validation-window baseline | complete: frames 1000–1999 on validation clips 117093 and 128058; development-window result only |
-| G1 full-clip gate | partial: harness self-test and window baseline reported passing; full validation-clip evaluation remains pending |
+| G1 full-clip gate | complete for validation scoring: T0 full validation clips scored with TrackEval; the test split remains untouched in Phase II |
 | G2 GTATrack code check | not started |
-| G3 detector gate | partial: P2-more improves the fixed validation windows; B3 joint threshold change did not improve tracking; full-clip validation remains pending |
-| WS-B detector | P2-more four-clip training and two-window TrackEval scoring complete; static-filter sweep rejected; B3 117093 window used P2-more weights and joint NMS/merge IoU 0.7; no isolated threshold ablation yet; full-clip evaluation pending |
-| WS-C tracker | Phase I IoU tracker scored; P2-more evaluated with inherited Phase I settings; tracker v2 not started |
-| WS-D ablation | not started |
+| G3 detector gate | partial: P2-more four-clip training, two-window and full-clip validation scoring complete; static filter rejected; isolated NMS/merge threshold comparisons complete on one window; detector work and broader ablation remain |
+| WS-B detector | P2-more evaluated on both full validation clips; static-filter sweep rejected; combined B3 trial and isolated NMS/merge threshold trials recorded; no detector-only full-clip score or full ablation table yet |
+| WS-C tracker | T0 and P2-more scored full-clip with IoU and IoU-v2. C4 tuning chose pre-tracking cap K=22 on the fixed tuning windows; confirmation on `p2more_w3` frames 4000–4999 is pending. |
+| WS-D ablation | partial: full-clip T0/P2-more tracker comparison and window threshold/C4 experiments available; complete component ablation and GTATrack same-clip code result pending |
 | WS-E product | not started |
 | WS-F model card, error analysis v2, snapshots | not started |
-| WS-G fundamentals pack | undecided |
+| WS-G fundamentals pack | deferred unless time remains (D2) |

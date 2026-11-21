@@ -1,0 +1,72 @@
+{
+  "protocol": "docs/phase2_amendment_c4_roster.md",
+  "chosen": {
+    "mode": "det",
+    "k": 22
+  },
+  "v2_params": {
+    "det_high": 0.6,
+    "det_low": 0.3,
+    "match_iou": 0.3,
+    "max_age": 5,
+    "min_hits": 3
+  },
+  "rescored": [
+    {
+      "mode": "det",
+      "k": 22,
+      "hota": 0.5392413523754985,
+      "deta": 0.705683102683905,
+      "assa": 0.418545478093975,
+      "fp": 1243.0,
+      "fn": 2652.0,
+      "idsw": 254.5,
+      "reference_hota": 0.53923975910527
+    },
+    {
+      "mode": "det",
+      "k": 24,
+      "hota": 0.5344301454424079,
+      "deta": 0.7054280591502607,
+      "assa": 0.4109404317139824,
+      "fp": 1521.0,
+      "fn": 2397.5,
+      "idsw": 270.0,
+      "reference_hota": 0.5344262038090613
+    },
+    {
+      "mode": "det",
+      "k": 26,
+      "hota": 0.5334559126159032,
+      "deta": 0.6992504187985384,
+      "assa": 0.4126106432391699,
+      "fp": 1768.0,
+      "fn": 2350.5,
+      "idsw": 271.0,
+      "reference_hota": 0.5334520105972215
+    },
+    {
+      "mode": "none",
+      "k": null,
+      "hota": 0.5316218561954014,
+      "deta": 0.6965558999641304,
+      "assa": 0.4111988195692227,
+      "fp": 1868.0,
+      "fn": 2338.5,
+      "idsw": 270.0,
+      "reference_hota": 0.5316182055212568
+    }
+  ],
+  "c4_rejected": false,
+  "rule": "best TrackEval mean HOTA; within 0.005 -> lower IDSW, then larger k",
+  "environment": {
+    "utc": "2026-11-21T08:55:58+00:00",
+    "python": "3.13.18",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "b2575ce69ef3962b00b23b5375aa3a77d7d507d8",
+    "git_dirty": true,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/tune_roster.py finalize"
+  }
+}

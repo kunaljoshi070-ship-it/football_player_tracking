@@ -19,3 +19,20 @@ Notes: E1 and E2 were run on a laptop CPU, E4 and E8-E9 on a Colab T4, so the ba
 ## Phase II training resume note (2026-11-20)
 
 The P2-more six-epoch run was resumed from the epoch-4 `last.pt` checkpoint after an interrupted partial epoch-5 attempt. The iteration log was deduplicated by iteration, keeping the latest row; 47 duplicate iteration IDs were removed. Two timestamped config files record the original and resumed invocations. Best epoch 4 was selected by mean AP50/AP75 (selected value 0.9248; AP50 0.9656; AP75 0.8841).
+
+## Phase II evaluation log (2026-11-21)
+
+All metrics below are from the `trackeval` sections of the named JSON files (`trackeval_error: null`). Full-clip validation scores are development results: P2-more's epoch had been selected using these validation clips. Each clip contributes equally to the reported per-clip mean.
+
+| Run | Setup | Mean HOTA / DetA / AssA / LocA | Mean FP / FN / IDSW | Records |
+|---|---|---|---|---|
+| T0 `p1model_full`, IoU | Phase I weights and frozen Phase I IoU tracker; validation frames 0–5975 (117093) and 0–5980 (128058) | 0.3188 / 0.7063 / 0.1446 / 0.8790 | 19,768 / 6,392 / 1,483 | `results/p2_full_t0_iou.json` |
+| T0 `p1model_full`, IoU-v2 | Same weights; tracker-v2 settings `det_high=0.6`, `det_low=0.3`, `match_iou=0.3`, `max_age=5`, `min_hits=3` | 0.3439 / 0.7175 / 0.1659 / 0.8796 | 15,972 / 7,544 / 1,126.5 | `results/p2_full_t0_iou_v2.json` |
+| P2-more `p2more_full`, IoU | P2-more weights and frozen Phase I IoU tracker; same full validation ranges | 0.3436 / 0.7557 / 0.1575 / 0.8884 | 12,097 / 6,143 / 1,356.5 | `results/p2_full_p2more_iou.json` |
+| P2-more `p2more_full`, IoU-v2 | P2-more weights and the same tracker-v2 settings as above | 0.3681 / 0.7613 / 0.1792 / 0.8888 | 9,716.5 / 7,120.5 / 983 | `results/p2_full_p2more_iou_v2.json` |
+
+With IoU-v2 held fixed, P2-more versus T0 improved mean HOTA by 0.0242 and reduced mean FP from 15,972 to 9,716.5; mean FN also fell from 7,544 to 7,120.5. This is a full-validation comparison, not a held-out test result or a matched comparison with GTATrack. Detector-only full-clip JSON records were not present in the reviewed local changes.
+
+**Threshold isolation, clip 117093 frames 1000–1999:** the two runs used P2-more weights and changed one threshold from the 0.5/0.5 setting at a time. NMS 0.7 / merge IoU 0.5 gave IoU-tracker HOTA 0.3988, FP 2,831, FN 3,935 and IDSW 507, versus the 0.5/0.5 P2-more window result 0.3959, FP 2,976, FN 3,757 and IDSW 522. Merge IoU 0.7 / NMS 0.5 gave HOTA 0.3953, FP 3,060, FN 3,729 and IDSW 532. Thus the isolated NMS change made a small HOTA gain with more misses; the isolated merge-IoU change did not improve HOTA. Detector-arm and IoU-arm records: `results/p2more_nms07_detector.json`, `results/p2more_nms07_iou.json`, `results/p2more_merge07_detector.json`, `results/p2more_merge07_iou.json`. These are one-window development results.
+
+**C4 roster-cap tuning:** the frozen protocol is `docs/phase2_amendment_c4_roster.md`. On the two tuning windows (frames 1000–1999), TrackEval selected pre-tracking detection cap `mode=det, K=22`: mean HOTA 0.53924, DetA 0.70568, AssA 0.41855, FP 1,243, FN 2,652, IDSW 254.5. The uncapped `none` candidate scored HOTA 0.53162, DetA 0.69656, AssA 0.41120, FP 1,868, FN 2,338.5, IDSW 270. The selected setting is provisional until the predeclared confirmation window (frames 4000–4999, run `p2more_w3`) is scored; it has not yet passed the confirmation gate. Records: `results/c4_sweep.json`, `results/c4_tuning.json`.

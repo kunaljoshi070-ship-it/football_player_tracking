@@ -243,3 +243,13 @@ For future AI use, add the exact prompt, date/tool, output used, edits made, and
 **Verification:** Read the supplied detection configuration and the current TrackEval result records for P2-more, B3, T0 and the static-filter sweep. No code, tests or experiments were run in this session.
 
 **Sources:** Student-supplied `detect_config.json` and project result records; no new external sources.
+
+## 2026-11-21 — ChatGPT (Codex), Phase II evaluation-log update
+
+**Prompt:** “check the local uncommitted files and update the logs accordingly”.
+
+**Use:** Reviewed the local Phase II result records for full-validation T0 and P2-more scoring, the single-threshold NMS and merge-IoU comparisons, and the C4 roster-cap sweep/rescore. Updated `docs/experiment_log.md` with the TrackEval metrics and limits, `docs/phase2_plan.md` with the current status and pending C4 confirmation, and this contribution log. The logs distinguish full-clip validation development results from the still-unrun final test and do not claim a GTATrack-matched comparison. C4 K=22 is recorded as a tuning selection only; its amendment-defined confirmation is pending.
+
+**Verification:** Read the JSON files and confirmed their `trackeval_error` fields are `null`; copied the reported TrackEval mean metrics into the log. No code, tests, scoring, or training were run by this assistant. The README and result files were not edited.
+
+**Sources:** Local records `results/p2_full_*.json`, `results/p2more_nms07_*.json`, `results/p2more_merge07_*.json`, `results/c4_sweep.json`, `results/c4_tuning.json`; protocol `docs/phase2_amendment_c4_roster.md`.

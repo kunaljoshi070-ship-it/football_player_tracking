@@ -1,0 +1,102 @@
+{
+  "run": "p2more_nms07",
+  "arm": "detector",
+  "score": 0.5,
+  "tracker_params": null,
+  "postfilter": {
+    "static_frac": 0.0,
+    "window": 250,
+    "iou": 0.8
+  },
+  "sequences": {
+    "117093_1000_2000": {
+      "clip_id": "117093",
+      "role": "val",
+      "start": 1000,
+      "end": 2000,
+      "frames": 1000
+    }
+  },
+  "results": {
+    "reference": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.023756898488216854,
+          "DetA": 0.6027374084317068,
+          "AssA": 0.0010000000000000002,
+          "LocA": 0.8488893177623001,
+          "HOTA_at_0.5": 0.02700106251704144,
+          "FN_at_0.5": 4211.0,
+          "FP_at_0.5": 2400.0,
+          "n_gt": 22000,
+          "n_pred": 20189,
+          "IDSW": 17763
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.023756898488216854,
+        "DetA": 0.6027374084317068,
+        "AssA": 0.0010000000000000002,
+        "LocA": 0.8488893177623001,
+        "IDSW": 17763.0
+      },
+      "pooled": {
+        "HOTA": 0.023756898488216854,
+        "DetA": 0.6027374084317068,
+        "AssA": 0.0010000000000000002,
+        "LocA": 0.8488893177623001,
+        "HOTA_at_0.5": 0.02700106251704144,
+        "FN_at_0.5": 4211.0,
+        "FP_at_0.5": 2400.0,
+        "n_gt": 22000,
+        "n_pred": 20189
+      }
+    },
+    "trackeval": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.02375741004463852,
+          "DetA": 0.6027552201290087,
+          "AssA": 0.0010000000000000002,
+          "LocA": 0.8488861846072877,
+          "FP": 2369.0,
+          "FN": 4180.0,
+          "IDSW": 17798.0,
+          "IDF1": 0.0010429258811538553
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.02375741004463852,
+        "DetA": 0.6027552201290087,
+        "AssA": 0.0010000000000000002,
+        "LocA": 0.8488861846072877,
+        "FP": 2369.0,
+        "FN": 4180.0,
+        "IDSW": 17798.0,
+        "IDF1": 0.0010429258811538553
+      },
+      "pooled": {
+        "HOTA": 0.02375741004463852,
+        "DetA": 0.6027552201290087,
+        "AssA": 0.0010000000000000002,
+        "LocA": 0.8488861846072877,
+        "FP": 2369.0,
+        "FN": 4180.0,
+        "IDSW": 17798.0,
+        "IDF1": 0.0010429258811538553
+      }
+    },
+    "trackeval_error": null
+  },
+  "note": "mean_over_seqs is the Challenge-style per-clip mean; pooled sums counts. 'detector' arm ids are unique per box (AssA not meaningful). Report TrackEval numbers; 'reference' is the NumPy cross-check.",
+  "environment": {
+    "utc": "2026-11-21T12:35:56+00:00",
+    "python": "3.13.16",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "b2575ce69ef3962b00b23b5375aa3a77d7d507d8",
+    "git_dirty": false,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/phase2.py score --clip 117093 --run p2more_nms07 --arm detector --det-root /content/drive/MyDrive/soccer_runs/detections_p2 --out results/p2more_nms07_detector.json"
+  }
+}

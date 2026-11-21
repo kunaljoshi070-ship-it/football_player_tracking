@@ -1,0 +1,107 @@
+{
+  "run": "p2more_merge07",
+  "arm": "iou",
+  "score": 0.5,
+  "tracker_params": {
+    "iou_thr": 0.4,
+    "max_age": 1,
+    "min_hits": 1,
+    "use_velocity": true
+  },
+  "postfilter": {
+    "static_frac": 0.0,
+    "window": 250,
+    "iou": 0.8
+  },
+  "sequences": {
+    "117093_1000_2000": {
+      "clip_id": "117093",
+      "role": "val",
+      "start": 1000,
+      "end": 2000,
+      "frames": 1000
+    }
+  },
+  "results": {
+    "reference": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.3952869394002098,
+          "DetA": 0.5888606861597926,
+          "AssA": 0.2731985725060988,
+          "LocA": 0.8421169457870123,
+          "HOTA_at_0.5": 0.4492411069769895,
+          "FN_at_0.5": 4213.0,
+          "FP_at_0.5": 3544.0,
+          "n_gt": 22000,
+          "n_pred": 21331,
+          "IDSW": 534
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.3952869394002098,
+        "DetA": 0.5888606861597926,
+        "AssA": 0.2731985725060988,
+        "LocA": 0.8421169457870123,
+        "IDSW": 534.0
+      },
+      "pooled": {
+        "HOTA": 0.3952869394002098,
+        "DetA": 0.5888606861597926,
+        "AssA": 0.2731985725060988,
+        "LocA": 0.8421169457870123,
+        "HOTA_at_0.5": 0.4492411069769895,
+        "FN_at_0.5": 4213.0,
+        "FP_at_0.5": 3544.0,
+        "n_gt": 22000,
+        "n_pred": 21331
+      }
+    },
+    "trackeval": {
+      "per_seq": {
+        "117093_1000_2000": {
+          "HOTA": 0.39529702916992315,
+          "DetA": 0.5888782068893907,
+          "AssA": 0.2732041647450052,
+          "LocA": 0.8421134700445975,
+          "FP": 3060.0,
+          "FN": 3729.0,
+          "IDSW": 532.0,
+          "IDF1": 0.362419514896956
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.39529702916992315,
+        "DetA": 0.5888782068893907,
+        "AssA": 0.2732041647450052,
+        "LocA": 0.8421134700445975,
+        "FP": 3060.0,
+        "FN": 3729.0,
+        "IDSW": 532.0,
+        "IDF1": 0.362419514896956
+      },
+      "pooled": {
+        "HOTA": 0.39529702916992315,
+        "DetA": 0.5888782068893907,
+        "AssA": 0.2732041647450052,
+        "LocA": 0.8421134700445975,
+        "FP": 3060.0,
+        "FN": 3729.0,
+        "IDSW": 532.0,
+        "IDF1": 0.362419514896956
+      }
+    },
+    "trackeval_error": null
+  },
+  "note": "mean_over_seqs is the Challenge-style per-clip mean; pooled sums counts. 'detector' arm ids are unique per box (AssA not meaningful). Report TrackEval numbers; 'reference' is the NumPy cross-check.",
+  "environment": {
+    "utc": "2026-11-21T12:36:18+00:00",
+    "python": "3.13.16",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "b2575ce69ef3962b00b23b5375aa3a77d7d507d8",
+    "git_dirty": true,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/phase2.py score --clip 117093 --run p2more_merge07 --arm iou --det-root /content/drive/MyDrive/soccer_runs/detections_p2 --out results/p2more_merge07_iou.json"
+  }
+}

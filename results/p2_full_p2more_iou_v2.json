@@ -1,0 +1,137 @@
+{
+  "run": "p2more_full",
+  "arm": "iou_v2",
+  "score": 0.5,
+  "tracker_params": {
+    "det_high": 0.6,
+    "det_low": 0.3,
+    "match_iou": 0.3,
+    "max_age": 5,
+    "min_hits": 3
+  },
+  "postfilter": {
+    "static_frac": 0.0,
+    "window": 250,
+    "iou": 0.8
+  },
+  "sequences": {
+    "117093_0_5976": {
+      "clip_id": "117093",
+      "role": "val",
+      "start": 0,
+      "end": 5976,
+      "frames": 5976
+    },
+    "128058_0_5981": {
+      "clip_id": "128058",
+      "role": "val",
+      "start": 0,
+      "end": 5981,
+      "frames": 5981
+    }
+  },
+  "results": {
+    "reference": {
+      "per_seq": {
+        "117093_0_5976": {
+          "HOTA": 0.3738517746686214,
+          "DetA": 0.7360374866534658,
+          "AssA": 0.1906243264180898,
+          "LocA": 0.8869293928972661,
+          "HOTA_at_0.5": 0.41675785906329377,
+          "FN_at_0.5": 7775.0,
+          "FP_at_0.5": 16623.0,
+          "n_gt": 131472,
+          "n_pred": 140320,
+          "IDSW": 941
+        },
+        "128058_0_5981": {
+          "HOTA": 0.36233157699371565,
+          "DetA": 0.7865484635654598,
+          "AssA": 0.16780885082952582,
+          "LocA": 0.8906643550325569,
+          "HOTA_at_0.5": 0.39976970500622466,
+          "FN_at_0.5": 9553.0,
+          "FP_at_0.5": 5897.0,
+          "n_gt": 131582,
+          "n_pred": 127926,
+          "IDSW": 1021
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.36809167583116853,
+        "DetA": 0.7612929751094628,
+        "AssA": 0.1792165886238078,
+        "LocA": 0.8887968739649115,
+        "IDSW": 981.0
+      },
+      "pooled": {
+        "HOTA": 0.36837979025119444,
+        "DetA": 0.7603410713948761,
+        "AssA": 0.17928408419943578,
+        "LocA": 0.8887877301738785,
+        "HOTA_at_0.5": 0.4086677043726744,
+        "FN_at_0.5": 17328.0,
+        "FP_at_0.5": 22520.0,
+        "n_gt": 263054,
+        "n_pred": 268246
+      }
+    },
+    "trackeval": {
+      "per_seq": {
+        "117093_0_5976": {
+          "HOTA": 0.3738497295939054,
+          "DetA": 0.7360374353036281,
+          "AssA": 0.1906221501281414,
+          "LocA": 0.8869294587947774,
+          "FP": 15215.0,
+          "FN": 6367.0,
+          "IDSW": 944.0,
+          "IDF1": 0.3130776476128804
+        },
+        "128058_0_5981": {
+          "HOTA": 0.36233158443969005,
+          "DetA": 0.7865456459695395,
+          "AssA": 0.16781000327799495,
+          "LocA": 0.8906642379069527,
+          "FP": 4218.0,
+          "FN": 7874.0,
+          "IDSW": 1022.0,
+          "IDF1": 0.26689735961897126
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.3680906570167977,
+        "DetA": 0.7612915406365838,
+        "AssA": 0.17921607670306816,
+        "LocA": 0.888796848350865,
+        "FP": 9716.5,
+        "FN": 7120.5,
+        "IDSW": 983.0,
+        "IDF1": 0.28998750361592585
+      },
+      "pooled": {
+        "HOTA": 0.36837876322225166,
+        "DetA": 0.76033972251609,
+        "AssA": 0.17928362655893276,
+        "LocA": 0.8887877003827098,
+        "FP": 19433.0,
+        "FN": 14241.0,
+        "IDSW": 1966.0,
+        "IDF1": 0.29052136269527573
+      }
+    },
+    "trackeval_error": null
+  },
+  "note": "mean_over_seqs is the Challenge-style per-clip mean; pooled sums counts. 'detector' arm ids are unique per box (AssA not meaningful). Report TrackEval numbers; 'reference' is the NumPy cross-check.",
+  "environment": {
+    "utc": "2026-11-21T12:00:40+00:00",
+    "python": "3.13.18",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "b2575ce69ef3962b00b23b5375aa3a77d7d507d8",
+    "git_dirty": true,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/phase2.py score --role val --run p2more_full --arm iou_v2 --det-root /content/drive/MyDrive/soccer_runs/detections_p2 --out results/p2_full_p2more_iou_v2.json"
+  }
+}
