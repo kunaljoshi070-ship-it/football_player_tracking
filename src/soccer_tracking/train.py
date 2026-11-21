@@ -6,7 +6,7 @@ Meant for a GPU (see README, "Training on a hosted GPU"); it also runs on CPU fo
 
 Outputs in ``runs/<run-name>/``: ``config_<utc>.json`` (all settings + environment), ``iterations.csv``
 and ``metrics.csv`` (learning curves), ``curves.png``, ``last.pt`` / ``best.pt`` (git-ignored) and
-``summary.json``. Early stopping and "best" are decided on validation AP50 only; the test split is
+``summary.json``. Early stopping and "best" use ``--select-metric`` (default: AP50); the test split is
 never touched here.
 """
 
@@ -52,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--weight-decay", type=float, default=1e-4)
     p.add_argument("--warmup-iters", type=int, default=100)
     p.add_argument("--clip-grad", type=float, default=10.0, help="max gradient norm")
-    p.add_argument("--patience", type=int, default=3, help="stop after this many epochs without val AP50 improvement")
+    p.add_argument("--patience", type=int, default=3, help="stop after this many epochs without improvement in --select-metric")
     p.add_argument("--val-stride", type=int, default=125, help="validate on every Nth frame (multiple of the extraction stride)")
     p.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True, help="mixed precision (CUDA only)")
     p.add_argument("--workers", type=int, default=2)
@@ -86,6 +86,27 @@ def _append_row(path: Path, cols: Sequence[str], row: dict) -> None:
         writer.writerow(row)
 
 
+def _dedupe_iteration_rows(rows: list) -> list:
+    """Keep the last logged row for each iteration, returned in iteration order."""
+    latest = {}
+    for row in rows:
+        latest[int(row["iteration"])] = row
+    return [latest[i] for i in sorted(latest)]
+
+
+def _normalize_iteration_log(path: Path, max_iteration: Optional[int] = None) -> list:
+    """Deduplicate a resumed run's CSV, optionally dropping work beyond its checkpoint."""
+    if not path.is_file():
+        return []
+    rows = _dedupe_iteration_rows(_read_csv(path))
+    if max_iteration is not None:
+        rows = [row for row in rows if int(row["iteration"]) <= max_iteration]
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=ITER_COLS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return rows
+
 def lr_at(iteration: int, total: int, peak: float, warmup: int) -> float:
     """Linear warmup, then cosine decay to 1% of the peak."""
     warm = min(1.0, (iteration + 1) / max(1, warmup))
@@ -102,7 +123,7 @@ def plot_curves(out_dir: Path) -> Optional[Path]:
     except ImportError:
         print("matplotlib not installed: skipping curves.png (the CSV files have the data)")
         return None
-    its, eps = _read_csv(out_dir / "iterations.csv"), _read_csv(out_dir / "metrics.csv")
+    its, eps = _dedupe_iteration_rows(_read_csv(out_dir / "iterations.csv")), _read_csv(out_dir / "metrics.csv")
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
     if its:
         axes[0].plot([float(r["iteration"]) for r in its], [float(r["loss"]) for r in its], label="total")
@@ -174,7 +195,8 @@ def run(args: argparse.Namespace) -> dict:
         ckpt = torch.load(args.resume, map_location="cpu", weights_only=True)
         model.load_state_dict(ckpt["model"])
         optimizer.load_state_dict(ckpt["optimizer"])
-        start_epoch, iteration, best, bad = ckpt["epoch"], ckpt["iteration"], ckpt["best_ap50"], ckpt["bad_epochs"]
+        start_epoch, iteration, best, bad = ckpt["epoch"], ckpt["iteration"], ckpt.get("best_select_value", ckpt.get("best_ap50", -1.0)), ckpt["bad_epochs"]
+        _normalize_iteration_log(out_dir / "iterations.csv", max_iteration=iteration)
         print(f"resumed from {args.resume}: starting epoch {start_epoch + 1}, iteration {iteration}")
 
     config = {"settings": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
@@ -241,19 +263,25 @@ def run(args: argparse.Namespace) -> dict:
         else:
             bad += 1
         state = {"model": model.state_dict(), "optimizer": optimizer.state_dict(), "epoch": epoch + 1,
-                 "iteration": iteration, "best_ap50": best, "bad_epochs": bad}
+                 "iteration": iteration, "best_select_value": best, "best_select_metric": args.select_metric, "bad_epochs": bad}
         torch.save(state, out_dir / "last.pt")
         if improved:
             torch.save(state, out_dir / "best.pt")
         print(f"epoch {epoch + 1}: train loss {row['train_loss']:.4f}  val AP50 {val['ap50']:.4f} AP75 {val['ap75']:.4f} "
               f"P {row['val_precision']:.3f} R {row['val_recall']:.3f}{'  (best)' if improved else ''}", flush=True)
         if bad >= args.patience:
-            print(f"early stopping: no val AP50 improvement for {bad} epochs")
+            print(f"early stopping: no {args.select_metric} improvement for {bad} epochs")
             break
 
+    _normalize_iteration_log(out_dir / "iterations.csv")
     rows = _read_csv(out_dir / "metrics.csv")
     best_row = max(rows, key=lambda r: select_value({"ap50": float(r["val_ap50"]), "ap75": float(r["val_ap75"])}, args.select_metric)) if rows else {}
-    summary = {"best_epoch": int(best_row["epoch"]) if best_row else None, "best_val_ap50": best,
+    best_select_value = select_value({"ap50": float(best_row["val_ap50"]), "ap75": float(best_row["val_ap75"])}, args.select_metric) if best_row else None
+    summary = {"best_epoch": int(best_row["epoch"]) if best_row else None,
+               "select_metric": args.select_metric,
+               "best_select_value": best_select_value,
+               "best_val_ap50": float(best_row["val_ap50"]) if best_row else None,
+               "best_val_ap75": float(best_row["val_ap75"]) if best_row else None,
                "epochs_run": len(rows), "iterations": iteration, "run_dir": str(out_dir)}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     plot = plot_curves(out_dir)

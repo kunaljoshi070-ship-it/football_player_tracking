@@ -38,14 +38,14 @@ class RoleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exactly one"):
             select_clips(None, None, False, False)
 
-        def test_suppress_static(self):
-            from soccer_tracking.postfilter import suppress_static
-            still = np.array([[10., 10., 30., 50.]])
-            frames = [(np.vstack([still, [[100. + 3 * i, 10., 120. + 3 * i, 50.]]]), np.array([0.9, 0.9])) for i in range(60)]
-            out = suppress_static(frames, window=40, step=2, min_frac=0.9)
-            for b, s in out[10:50]:
-                self.assertEqual(len(b), 1)
-                self.assertGreater(b[0, 0], 50)
+    def test_suppress_static(self):
+        from soccer_tracking.postfilter import suppress_static
+        still = np.array([[10., 10., 30., 50.]])
+        frames = [(np.vstack([still, [[100. + 3 * i, 10., 120. + 3 * i, 50.]]]), np.array([0.9, 0.9])) for i in range(60)]
+        out = suppress_static(frames, window=40, step=2, min_frac=0.9)
+        for b, s in out[10:50]:
+            self.assertEqual(len(b), 1)
+            self.assertGreater(b[0, 0], 50)
 
 
 def dets(n=10):

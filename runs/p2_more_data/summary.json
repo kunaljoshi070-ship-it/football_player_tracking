@@ -1,6 +1,9 @@
 {
   "best_epoch": 4,
-  "best_val_ap50": 0.9248281065209822,
+  "select_metric": "mean",
+  "best_select_value": 0.9248281065209822,
+  "best_val_ap50": 0.9655977581067323,
+  "best_val_ap75": 0.8840584549352323,
   "epochs_run": 6,
   "iterations": 8994,
   "run_dir": "/content/drive/MyDrive/soccer_runs/p2_more_data"

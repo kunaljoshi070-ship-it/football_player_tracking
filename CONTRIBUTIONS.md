@@ -224,3 +224,22 @@ For future AI use, add the exact prompt, date/tool, output used, edits made, and
 **Verification:** Read the current plan, contribution log, training/data code, manifest, and `postfilter.py`, and used the supplied agent report. No tests or training were run in this session.
 
 **Sources:** Existing project files and the student-supplied agent report; no new external sources.
+
+## 2026-11-20 — ChatGPT (Codex), Phase II run review and documentation
+
+**Prompt:** The student asked for a latest-repository review, updates to the README, Phase II plan and contribution log, and a takeover handoff, then asked to recheck after syncing the result files.
+
+**Use:** Updated the README and Phase II status board with the P2-more TrackEval window results, the B3 window result, and the rejected static-filter sweep. Recorded that the validation-window results are development evidence and that B3 changed NMS and merge IoU together. The takeover file is pending confirmation of B3's saved `detect_config.json`.
+
+**Verification:** Read GitHub `main`, the P2-more and B3 JSON result records, the static-filter JSON records, and the Phase II evaluation code. No code, tests, or experiments were run in this session. The student later supplied `detect_config.json`, confirming B3 used the P2-more checkpoint with NMS and merge IoU both set to 0.7; this showed the run name `p1model_nms07` was misleading.
+
+**Sources:** Student-supplied run output and project result records; no new external sources.
+## 2026-11-20 — ChatGPT (Codex), B3 configuration review after student supplied detect_config.json
+
+**Prompt:** The student supplied `detect_config.json` after I requested it to verify B3 before preparing the takeover handoff.
+
+**Use:** Corrected the README and Phase II status to show that B3 used the P2-more checkpoint, not Phase I weights, and changed NMS and merge IoU together. The run name `p1model_nms07` was therefore misleading. The next-agent handoff is provided in the conversation rather than saved as a repository file, as requested.
+
+**Verification:** Read the supplied detection configuration and the current TrackEval result records for P2-more, B3, T0 and the static-filter sweep. No code, tests or experiments were run in this session.
+
+**Sources:** Student-supplied `detect_config.json` and project result records; no new external sources.

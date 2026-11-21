@@ -117,23 +117,23 @@ The compendium lists a NumPy MLP with backpropagation and SGD, momentum and Nest
 | G5 | sessions 11-12 | Full ablation table; error analysis v2; final configuration frozen; test run once (T3 decision) |
 | G6 | sessions 12-15 | Product, model card, docs, snapshots, viva preparation |
 
-Roughly 15 sessions of 2 to 3 hours plus Colab time; the real number depends on your deadline (decision D1).
+Planning assumption: roughly 15 sessions of 2–3 hours plus Colab time; Phase II deadline is 2026-11-23 (D1).
 
 ## 6. Risks and mitigations
 
-- **GPU time.** Free Colab sessions are limited; full-clip inference and longer training are heavy. Mitigation: two-tier evaluation, speed work first, resumable runs, consider Colab Pro or Kaggle (D4).
+- **GPU time.** Free Colab T4 availability can vary; full-clip inference and longer training are heavy. Mitigation: two-tier evaluation, speed work first, resumable runs; use the local RTX 4060 if available (D4).
 - **Identity is hard** (near-identical kits). Mitigation: colour and OSNet features plus global linking; HOTA can still be reached mainly through DetA.
 - **Hidden-test mismatch.** Mitigation: report validation-pair and test-pair numbers separately, never claim more than the protocol supports.
 - **Label gaps** (unlabelled people) cap measurable precision. Mitigation: official filter; state it in the report.
 - **Contamination.** Mitigation: one-time test rule, reserve clips untouched, amendments before runs.
 - **Hand-offs between AI sessions.** Mitigation: the status board and handoff block below; every session adds a `CONTRIBUTIONS.md` entry.
 
-## 7. Open decisions (defaults in brackets)
+## 7. Confirmed decisions
 
-- D1. Phase II deadline and weekly hours. [unknown: plan assumes about 15 sessions]
-- D2. Include the compendium fundamentals pack (WS-G)? [small pack only if required]
-- D3. Second architecture: torchvision FCOS or Faster R-CNN v2 (easy) or YOLO (direct comparison, AGPL licence). [torchvision first]
-- D4. Compute: free Colab, Colab Pro, or Kaggle. [free Colab, revisit at G1]
+- D1. Phase II deadline: 2026-11-23. The plan uses roughly 15 sessions of 2–3 hours plus Colab time; a separate weekly-hours estimate was not recorded.
+- D2. Fundamentals pack: a small, time-boxed pack only if time remains; prioritize the scored Phase II work first.
+- D3. Second architecture: torchvision FCOS.
+- D4. Compute: free Colab T4 as the primary GPU; use the local RTX 4060 if available.
 
 ## 8. Handoff protocol (for every session, human or AI)
 
@@ -151,18 +151,20 @@ Conventions: Phase I results and the Phase I split are frozen; new runs get new 
 
 **T0 window record (2026-11-19):** Phase I `best.pt` with the Phase I IoU tracker, TrackEval, frames 1000–1999 of validation clips 117093 and 128058. Tracker-arm mean: HOTA 0.479, DetA 0.649, AssA 0.360, LocA 0.858, FP 3,466, FN 2,172, IDSW 371.5. Detector-only: DetA 0.669, FP 2,938, FN 2,281; detector-only identity metrics are not meaningful because every detection receives a unique ID. These are partial-window development results, not full-clip results and not a matched-protocol comparison with GTATrack. The supplied verification report states NumPy-reference/TrackEval agreement within about 0.0002 for HOTA, DetA, AssA and LocA, with IDSW within 1; report TrackEval FP/FN only because the reference and TrackEval use different matching rules.
 
+**Phase II update (2026-11-20):** P2-more training and TrackEval scoring are complete on the two fixed validation windows. Mean IoU-tracker HOTA rose from T0 0.4788 to P2-more 0.5029; detector DetA rose from 0.6694 to 0.7126. These remain development results because these validation clips also selected the training epoch. B3 used the P2-more checkpoint, NMS 0.7 and merge IoU 0.7 on 117093; against P2-more on that same window, misses fell but FP rose sharply and tracker HOTA fell (0.3959 to 0.3739). Because both thresholds changed together, their individual effects are unknown. The static-filter sweep was rejected because it increased misses and lowered tracker HOTA. Detailed results are in the README and `results/p2_*.json`.
 | Item | Status |
 |---|---|
 | Phase II plan written | done (this file) |
-| D1-D4 decisions | open |
+| D1-D4 decisions | decided; see section 7 |
 | Phase I snapshot (tag and folder) | deferred |
 | Panel feedback recorded | not started (needs the student) |
 | WS-A harness (TrackEval, full-clip inference) | in progress: self-test and 87 unit tests reported passing; TrackEval/reference agreement verified on two real validation windows; full-clip T0 pending |
 | T0 validation-window baseline | complete: frames 1000–1999 on validation clips 117093 and 128058; development-window result only |
 | G1 full-clip gate | partial: harness self-test and window baseline reported passing; full validation-clip evaluation remains pending |
 | G2 GTATrack code check | not started |
-| WS-B detector | postfilter.py implementation committed; its effect is not yet measured; four-clip training not started |
-| WS-C tracker | not started |
+| G3 detector gate | partial: P2-more improves the fixed validation windows; B3 joint threshold change did not improve tracking; full-clip validation remains pending |
+| WS-B detector | P2-more four-clip training and two-window TrackEval scoring complete; static-filter sweep rejected; B3 117093 window used P2-more weights and joint NMS/merge IoU 0.7; no isolated threshold ablation yet; full-clip evaluation pending |
+| WS-C tracker | Phase I IoU tracker scored; P2-more evaluated with inherited Phase I settings; tracker v2 not started |
 | WS-D ablation | not started |
 | WS-E product | not started |
 | WS-F model card, error analysis v2, snapshots | not started |

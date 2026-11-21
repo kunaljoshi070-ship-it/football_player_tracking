@@ -231,3 +231,23 @@ python -m unittest discover -s tests
 If PowerShell refuses to run `Activate.ps1` ("running scripts is disabled on this system"), either allow scripts for that window only with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` (it resets when the window closes) or skip activation and call the environment's Python directly: `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` and `.\.venv\Scripts\python.exe -m unittest discover -s tests`.
 
 `.venv/` is git-ignored. GPU training needs a CUDA build of torch (see the note in `requirements.txt`); Colab already provides one. Extracted frames were produced separately on the laptop (OpenCV 4.13.0) and on Colab (OpenCV 4.14.0); JPEG output may differ very slightly between builds, which was not measured.
+
+## Phase II validation-window results (2026-11-20)
+
+These are development results on frames 1000–1999 of validation clips 117093 and 128058, except B3, which used clip 117093 only. They are not full-clip or final-test results. P2-more epoch selection used these same validation clips, so treat its scores as development evidence. Do not compare these window scores directly with GTATrack's full-clip challenge result.
+
+**P2-more training:** six epochs on 118575, 118576, 118577 and 117092; validation on 117093 and 128058; seed 0; Colab T4; best epoch 4 selected by mean AP50/AP75 (AP50 0.9656, AP75 0.8841). The IoU tracker settings were inherited from Phase I and were not retuned.
+
+TrackEval mean over the two validation clips:
+
+| Arm | Model | HOTA | DetA | AssA | LocA | FP | FN | IDSW |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Detector-only | Phase I T0 | 0.0251* | 0.6694 | 0.001* | 0.8617 | 2938.0 | 2281.0 | 19697.0* |
+| Detector-only | P2-more | 0.0259* | 0.7126 | 0.001* | 0.8704 | 1712.5 | 2293.5 | 19684.5* |
+| IoU tracker | Phase I T0 | 0.4788 | 0.6492 | 0.3596 | 0.8582 | 3466.5 | 2172.0 | 371.5 |
+| IoU tracker | P2-more | 0.5029 | 0.6955 | 0.3697 | 0.8671 | 2136.5 | 2154.0 | 342.5 |
+
+*Detector-only identity metrics are not meaningful because each detection receives a unique ID. FP/FN/IDSW shown are TrackEval mean-over-sequence values. See [`p2_more_detector.json`](results/p2_more_detector.json) and [`p2_more_iou.json`](results/p2_more_iou.json).
+
+**B3 combined NMS/merge trial** (117093, frames 1000–1999): the supplied `detect_config.json` confirms it used `/content/drive/MyDrive/soccer_runs/p2_more_data/best.pt`, NMS threshold 0.7 and merge IoU 0.7. The run name `p1model_nms07` is misleading: these are P2-more weights. Against P2-more on the same clip/window, detector DetA changed 0.6062→0.5970, FP 2479→4537 and FN 3972→2911; IoU-tracker HOTA changed 0.3959→0.3739, DetA 0.5890→0.5640, AssA 0.2738→0.2573, FP 2976→5648, FN 3757→2817 and IDSW 522→756. This joint change reduced misses but substantially increased false positives and lowered tracking metrics. Since NMS and merge IoU changed together, the trial cannot identify which change caused the effect. See [`p2_nms07_detector.json`](results/p2_nms07_detector.json), [`p2_nms07_iou.json`](results/p2_nms07_iou.json), and the Colab `detect_config.json` (kept outside Git).
+**Static post-filter:** the four-setting sweep on both arms was rejected. For example, fraction 0.9 / IoU 0.8 lowered tracker HOTA from 0.4788 to 0.4491 and increased mean FN from 2172.0 to 2518.5, despite a modest FP reduction. The complete results are in [`results/p2_static_*.json`](results/).
