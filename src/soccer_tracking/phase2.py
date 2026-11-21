@@ -158,8 +158,9 @@ def cmd_score(args) -> None:
     ids = select_clips(args.role, args.clip, args.allow_test, args.allow_reserve)
     by_id = {c.clip_id: c for c in load_manifest(args.manifest)}
     params = None
-    if args.arm == "iou":
-        params = json.loads(Path(args.params).read_text(encoding="utf-8"))["chosen"]
+    if args.arm in ("iou", "iou_v2"):
+        default = "tracker_v2_tuning.json" if args.arm == "iou_v2" else "tracker_tuning.json"
+        params = json.loads(Path(args.params or Path("results") / default).read_text(encoding="utf-8"))["chosen"]
     det_dir = Path(args.det_root) / args.run
     seqs, meta = {}, {}
     for cid in ids:
@@ -178,7 +179,11 @@ def cmd_score(args) -> None:
         if args.static_frac > 0:
             from .postfilter import suppress_static
             dets = suppress_static([(b, s) for b, s in dets], args.static_window, 5, args.static_frac, args.static_iou, args.score)
-        preds, sc = build_arm(dets, args.arm, args.score, params)
+        if args.arm == "iou_v2":
+            from .tracker_v2 import build_arm_v2
+            preds, sc = build_arm_v2(dets, params)      # v2 applies det_low/det_high itself
+        else:
+            preds, sc = build_arm(dets, args.arm, args.score, params)
         name = f"{cid}_{info['start']}_{info['end']}"
         seqs[name] = {"gt": gt_sequence(clip, ann, info["start"], n), "pred": preds, "scores": sc, "width": clip.width, "height": clip.height}
         meta[name] = {"clip_id": cid, "role": role_of(cid), "start": info["start"], "end": info["end"], "frames": n}
@@ -224,8 +229,8 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--device", default="auto")
     d.add_argument("--seed", type=int, default=0)
     e = sub.choices["score"]
-    e.add_argument("--arm", choices=("detector", "iou"), required=True)
-    e.add_argument("--params", type=Path, default=Path("results") / "tracker_tuning.json")
+    e.add_argument("--arm", choices=("detector", "iou", "iou_v2"), required=True)
+    e.add_argument("--params", type=Path, default=None, help="tracker settings JSON (default depends on --arm)")
     e.add_argument("--score", type=float, default=0.5)
     e.add_argument("--no-trackeval", action="store_true", help="NumPy reference only")
     e.add_argument("--static-frac", type=float, default=0.0, help="0 = off; else drop boxes static in this share of +-window/2 (e.g. 0.9)")

@@ -1,0 +1,88 @@
+{
+  "protocol": "docs/phase2_amendment_tracker_v2.md",
+  "tracker": "ByteIouTracker",
+  "chosen": {
+    "det_high": 0.6,
+    "det_low": 0.3,
+    "match_iou": 0.3,
+    "max_age": 5,
+    "min_hits": 3
+  },
+  "tuning_run": "p2more",
+  "tuning_windows": {
+    "117093_1000_2000": {
+      "clip_id": "117093",
+      "start": 1000,
+      "end": 2000
+    },
+    "128058_1000_2000": {
+      "clip_id": "128058",
+      "start": 1000,
+      "end": 2000
+    }
+  },
+  "rescored_top_k": [
+    {
+      "params": {
+        "det_high": 0.6,
+        "det_low": 0.3,
+        "match_iou": 0.3,
+        "max_age": 5,
+        "min_hits": 2
+      },
+      "hota": 0.5341063492560292,
+      "deta": 0.6955109795560035,
+      "assa": 0.41621479575640324,
+      "loca": 0.8668069577394135,
+      "fp": 1983.5,
+      "fn": 2220.0,
+      "idsw": 281.0,
+      "reference_hota": 0.5341030821321279
+    },
+    {
+      "params": {
+        "det_high": 0.6,
+        "det_low": 0.3,
+        "match_iou": 0.3,
+        "max_age": 15,
+        "min_hits": 2
+      },
+      "hota": 0.5326192095391472,
+      "deta": 0.688924318439224,
+      "assa": 0.41760228312747605,
+      "loca": 0.8662540769827574,
+      "fp": 2290.0,
+      "fn": 2165.0,
+      "idsw": 283.0,
+      "reference_hota": 0.5326159037342686
+    },
+    {
+      "params": {
+        "det_high": 0.6,
+        "det_low": 0.3,
+        "match_iou": 0.3,
+        "max_age": 5,
+        "min_hits": 3
+      },
+      "hota": 0.5316218561954014,
+      "deta": 0.6965558999641304,
+      "assa": 0.4111988195692227,
+      "loca": 0.8669837297430995,
+      "fp": 1868.0,
+      "fn": 2338.5,
+      "idsw": 270.0,
+      "reference_hota": 0.5316182055212568
+    }
+  ],
+  "rule": "best TrackEval mean HOTA; within 0.005 -> lower IDSW, then smaller max_age",
+  "environment": {
+    "utc": "2026-11-21T07:32:33+00:00",
+    "python": "3.13.16",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "1fd2227729565e67fa4d2dc19aac0212189e9062",
+    "git_dirty": true,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/tune_tracker_v2.py finalize --sweep results/tracker_v2_sweep.json --out results/tracker_v2_tuning.json"
+  }
+}
