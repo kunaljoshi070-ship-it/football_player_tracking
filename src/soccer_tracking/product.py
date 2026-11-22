@@ -1,16 +1,17 @@
-"""Product CLI Core (Phase II, WS-E): Offline Fixed-Camera Soccer Player Tracking & Tactical Analyzer.
+"""Product CLI Core (Phase II, WS-E): Football Tracker.
 
 Supports two execution modes:
 1. ``cached`` (instant, CPU-only, ideal for interactive review and live viva demos):
    Loads precomputed detection chunks (and optional ReID/Lab feature chunks) for a clip segment,
-   runs Tracker v3 with user-chosen thresholds, and exports all 4 product outputs in ~1-2 seconds.
+   runs Tracker v3 with user-chosen thresholds, and exports all product outputs.
 2. ``live`` (GPU recommended, ~0.35s/frame on T4):
    Validates an input video clip and segment bounds, runs P2-more tiled RetinaNet (FP16) +
-   optional fine-tuned OSNet + Tracker v3, and exports all 4 product outputs.
+   optional fine-tuned OSNet + Tracker v3, and exports all product outputs.
 
 Outputs written to ``--out-dir``:
-- ``annotated.mp4``      Annotated video with track IDs, scores, confidence flags, and disclaimer banner
-- ``trajectories.csv``   Frame-by-frame trajectories (frame, track_id, x1, y1, x2, y2, score, track_confidence, flags)
+- ``annotated.mp4``      Browser-playable H.264 annotated video with track IDs, scores, flags, and banner
+- ``preview_frame.png``  Crisp annotated middle keyframe preview
+- ``trajectories.csv``   Frame-by-frame trajectories in original pixel coordinates
 - ``heatmap.png``        Pitch occupancy heat map of player footpoints
 - ``summary.json``       Run metadata, track counts, confidence breakdown, and interpretation notice
 """
@@ -20,6 +21,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import shutil
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -214,7 +217,7 @@ def write_heatmap_png(
     for rows_f in per_frame_rows:
         for r in rows_f:
             xs.append(0.5 * (r["x1"] + r["x2"]))
-            ys.append(r["y2"])  # player footpoint
+            ys.append(r["y2"])
 
     fig, ax = plt.subplots(figsize=(10, 3.2), dpi=150)
     if bg_rgb is not None:
@@ -230,7 +233,7 @@ def write_heatmap_png(
         fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02, label="Footpoint density")
     ax.set_xlim(0, width)
     ax.set_ylim(height, 0)
-    ax.set_title("Player Footpoint Occupancy Heat Map (Image Plane)")
+    ax.set_title("Football Pitch Occupancy Heat Map (Image Plane)")
     ax.set_xlabel("Image X (px)")
     ax.set_ylabel("Image Y (px)")
     fig.tight_layout()
@@ -240,40 +243,118 @@ def write_heatmap_png(
     return out_path
 
 
+def _find_ffmpeg() -> Optional[str]:
+    exe = shutil.which("ffmpeg")
+    if exe:
+        return exe
+    try:
+        import imageio_ffmpeg  # type: ignore
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return None
+
+
+def _draw_annotated_frame(
+    frame_bgr: np.ndarray,
+    rows_f: Sequence[dict],
+    frame_num: int,
+    scale: float = 1.0,
+) -> np.ndarray:
+    h, w = frame_bgr.shape[:2]
+    if scale < 1.0:
+        nw = max(2, int(round(w * scale)) & ~1)
+        nh = max(2, int(round(h * scale)) & ~1)
+        canvas = cv2.resize(frame_bgr, (nw, nh), interpolation=cv2.INTER_AREA)
+        sx, sy = nw / w, nh / h
+    else:
+        canvas = frame_bgr.copy()
+        nw, nh = w, h
+        sx = sy = 1.0
+
+    for r in rows_f:
+        x1 = int(round(r["x1"] * sx))
+        y1 = int(round(r["y1"] * sy))
+        x2 = int(round(r["x2"] * sx))
+        y2 = int(round(r["y2"] * sy))
+        color = _color_for_id(r["track_id"])
+        thickness = 2 if r["track_confidence"] == "high" else 1
+        cv2.rectangle(canvas, (x1, y1), (x2, y2), color, thickness)
+        tag = f"#{r['track_id']} {r['score']:.2f}"
+        if r["flags"]:
+            tag += " *"
+        cv2.putText(canvas, tag, (x1, max(16, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
+
+    cv2.rectangle(canvas, (0, 0), (nw, 28), (18, 22, 20), -1)
+    banner = f"Frame {frame_num} | Active tracks: {len(rows_f)} | {DISCLAIMER_TEXT}"
+    cv2.putText(canvas, banner, (10, 19), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (235, 245, 238), 1, cv2.LINE_AA)
+    return canvas
+
+
 def write_annotated_video(
     out_path: Path,
     frames_bgr: Sequence[np.ndarray],
     per_frame_rows: Sequence[Sequence[dict]],
     fps: float,
     start_frame: int,
+    max_width: int = 1920,
+    preview_path: Optional[Path] = None,
 ) -> Path:
+    """Render annotated video (downscaled to <= max_width for smooth browser playback) and
+    transcode to H.264 (yuv420p + faststart) when ffmpeg / imageio-ffmpeg is available."""
     if not frames_bgr:
         raise RuntimeError("No frames available to render annotated video.")
     h, w = frames_bgr[0].shape[:2]
+    scale = min(1.0, max_width / float(w)) if max_width and w > max_width else 1.0
+    out_w = max(2, int(round(w * scale)) & ~1)
+    out_h = max(2, int(round(h * scale)) & ~1)
+
+    out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(str(out_path), fourcc, float(fps), (w, h))
-    if not writer.isOpened():
-        raise RuntimeError(f"OpenCV VideoWriter failed to open: {out_path}")
+    ffmpeg_exe = _find_ffmpeg()
+    raw_path = out_path.with_name(out_path.stem + "_raw.mp4") if ffmpeg_exe else out_path
+
+    # Try H264/avc1 directly if ffmpeg is absent, falling back to mp4v
+    writer = None
+    codecs = ("mp4v",) if ffmpeg_exe else ("avc1", "H264", "mp4v")
+    for cc in codecs:
+        cand = cv2.VideoWriter(str(raw_path), cv2.VideoWriter_fourcc(*cc), float(fps), (out_w, out_h))
+        if cand.isOpened():
+            writer = cand
+            break
+        cand.release()
+    if writer is None:
+        raise RuntimeError(f"OpenCV VideoWriter failed to open: {raw_path}")
+
+    mid_idx = len(frames_bgr) // 2
     try:
         for f_idx, (frame, rows_f) in enumerate(zip(frames_bgr, per_frame_rows)):
-            canvas = frame.copy()
-            for r in rows_f:
-                x1, y1, x2, y2 = int(round(r["x1"])), int(round(r["y1"])), int(round(r["x2"])), int(round(r["y2"]))
-                color = _color_for_id(r["track_id"])
-                thickness = 2 if r["track_confidence"] == "high" else 1
-                cv2.rectangle(canvas, (x1, y1), (x2, y2), color, thickness)
-                tag = f"#{r['track_id']} {r['score']:.2f}"
-                if r["flags"]:
-                    tag += " *"
-                cv2.putText(canvas, tag, (x1, max(14, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
-            # Fixed top interpretation banner
-            cv2.rectangle(canvas, (0, 0), (w, 28), (20, 20, 20), -1)
-            banner = f"Frame {start_frame + f_idx} | Active tracks: {len(rows_f)} | {DISCLAIMER_TEXT}"
-            cv2.putText(canvas, banner, (10, 19), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (240, 240, 240), 1, cv2.LINE_AA)
+            canvas = _draw_annotated_frame(frame, rows_f, start_frame + f_idx, scale=scale)
             writer.write(canvas)
+            if preview_path is not None and f_idx == mid_idx:
+                preview_path.parent.mkdir(parents=True, exist_ok=True)
+                cv2.imwrite(str(preview_path), canvas)
     finally:
         writer.release()
+
+    if ffmpeg_exe and raw_path != out_path:
+        try:
+            subprocess.run(
+                [
+                    ffmpeg_exe, "-y", "-loglevel", "error",
+                    "-i", str(raw_path),
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                    "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                    str(out_path),
+                ],
+                check=True,
+                timeout=120,
+            )
+            raw_path.unlink(missing_ok=True)
+        except Exception:
+            # Fallback to raw mp4 if libx264 fails
+            if raw_path.is_file() and not out_path.is_file():
+                raw_path.replace(out_path)
     return out_path
 
 
@@ -340,7 +421,10 @@ def run_cached_analysis(
 
     frames_bgr = _decode_segment(meta.path, meta.start_frame, meta.end_frame)
     out_dir = Path(out_dir)
-    vid_p = write_annotated_video(out_dir / "annotated.mp4", frames_bgr, per_frame_rows, meta.fps, meta.start_frame)
+    prev_p = out_dir / "preview_frame.png"
+    vid_p = write_annotated_video(
+        out_dir / "annotated.mp4", frames_bgr, per_frame_rows, meta.fps, meta.start_frame, preview_path=prev_p
+    )
     csv_p = write_trajectory_csv(out_dir / "trajectories.csv", per_frame_rows, meta.start_frame)
     bg_rgb = cv2.cvtColor(frames_bgr[len(frames_bgr) // 2], cv2.COLOR_BGR2RGB)
     hm_p = write_heatmap_png(out_dir / "heatmap.png", per_frame_rows, meta.width, meta.height, bg_rgb=bg_rgb)
@@ -357,7 +441,7 @@ def run_cached_analysis(
         "stats": stats,
         "runtime_seconds": round(time.time() - t0, 2),
         "disclaimer": DISCLAIMER_TEXT,
-        "outputs": {"video": str(vid_p), "csv": str(csv_p), "heatmap": str(hm_p)},
+        "outputs": {"video": str(vid_p), "preview": str(prev_p), "csv": str(csv_p), "heatmap": str(hm_p)},
     }
     sum_p = out_dir / "summary.json"
     sum_p.write_text(json.dumps(summary, indent=2, default=float) + "\n", encoding="utf-8")
@@ -377,7 +461,7 @@ def run_live_analysis(
     batch_size: int = 5,
     device: str = "auto",
 ) -> dict:
-    """Live segment inference pipeline: validates input -> P2-more FP16 -> optional OSNet -> Tracker v3 -> 4 outputs."""
+    """Live segment inference pipeline: validates input -> P2-more FP16 -> optional OSNet -> Tracker v3 -> outputs."""
     import torch
 
     from .detect import build_retinanet, detect_tiles, merge_tile_detections
@@ -418,7 +502,10 @@ def run_live_analysis(
     per_frame_rows, stats = compute_track_annotations(preds, scores, det_high=float(params["det_high"]))
 
     out_dir = Path(out_dir)
-    vid_p = write_annotated_video(out_dir / "annotated.mp4", frames_bgr, per_frame_rows, meta.fps, meta.start_frame)
+    prev_p = out_dir / "preview_frame.png"
+    vid_p = write_annotated_video(
+        out_dir / "annotated.mp4", frames_bgr, per_frame_rows, meta.fps, meta.start_frame, preview_path=prev_p
+    )
     csv_p = write_trajectory_csv(out_dir / "trajectories.csv", per_frame_rows, meta.start_frame)
     bg_rgb = cv2.cvtColor(frames_bgr[len(frames_bgr) // 2], cv2.COLOR_BGR2RGB)
     hm_p = write_heatmap_png(out_dir / "heatmap.png", per_frame_rows, meta.width, meta.height, bg_rgb=bg_rgb)
@@ -436,7 +523,7 @@ def run_live_analysis(
         "stats": stats,
         "runtime_seconds": round(time.time() - t0, 2),
         "disclaimer": DISCLAIMER_TEXT,
-        "outputs": {"video": str(vid_p), "csv": str(csv_p), "heatmap": str(hm_p)},
+        "outputs": {"video": str(vid_p), "preview": str(prev_p), "csv": str(csv_p), "heatmap": str(hm_p)},
     }
     sum_p = out_dir / "summary.json"
     sum_p.write_text(json.dumps(summary, indent=2, default=float) + "\n", encoding="utf-8")
@@ -445,7 +532,7 @@ def run_live_analysis(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="SoccerTrack Offline Tactical Analyzer CLI (Phase II MVP).")
+    p = argparse.ArgumentParser(description="Football Tracker CLI.")
     sub = p.add_subparsers(dest="mode", required=True)
     for name in ("cached", "live"):
         s = sub.add_parser(name)
