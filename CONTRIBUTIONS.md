@@ -34,6 +34,11 @@ Every external resource used in the submitted work. The links were opened and ch
 | Bodla et al., Soft-NMS, ICCV 2017 | Paper | https://openaccess.thecvf.com/content_iccv_2017/html/Bodla_Soft-NMS_--_Improving_ICCV_2017_paper.html | n/a | Idea for crowded players (not implemented) | None |
 | Chu et al., Detection in Crowded Scenes: One Proposal, Multiple Predictions, CVPR 2020 | Paper | https://openaccess.thecvf.com/content_CVPR_2020/html/Chu_Detection_in_Crowded_Scenes_One_Proposal_Multiple_Predictions_CVPR_2020_paper.html | n/a | Idea for crowded players (not implemented) | None |
 | Ultralytics YOLOv11 | Software (detector used by GTATrack) | https://github.com/ultralytics/ultralytics | See repository | Described in the comparison; not used by us | None |
+| TrackEval (JonathonLuiten/TrackEval) | Evaluation library | https://github.com/JonathonLuiten/TrackEval | MIT | Official Phase II HOTA, DetA, AssA, LocA, CLEAR, IDF1 scoring | No (used via `hota_eval.py`) |
+| `deep-person-reid` (`torchreid`, `osnet_x1_0`) | ReID library & weights | https://github.com/KaiyangZhou/deep-person-reid | MIT | `osnet_x1_0` backbone fine-tuned on the 4 SoccerTrack train clips | Used via public API; `train_reid.py` written from scratch |
+| SciPy | Library | https://scipy.org | BSD-3-Clause | Exact Hungarian assignment (`linear_sum_assignment`) in Tracker v3 | No (public API) |
+| Gradio | UI library | https://github.com/gradio-app/gradio | Apache-2.0 | Thin web UI (`src/soccer_tracking/app.py`) for offline analyzer MVP | No (public API) |
+| Luo et al., Bag of Tricks and a Strong Baseline for Deep Person Re-Identification, CVPRW 2019 | Paper | https://arxiv.org/abs/1903.07071 | n/a | Triplet + label-smoothed CE recipe for `train_reid.py` | Idea only; no code copied |
 
 **Dependencies:** `requirements.txt` pins the versions used (torch, torchvision, opencv-python, numpy, matplotlib); the unused `pandas` and `PyYAML` entries were removed when the versions were pinned.
 
@@ -253,3 +258,26 @@ For future AI use, add the exact prompt, date/tool, output used, edits made, and
 **Verification:** Read the JSON files and confirmed their `trackeval_error` fields are `null`; copied the reported TrackEval mean metrics into the log. No code, tests, scoring, or training were run by this assistant. The README and result files were not edited.
 
 **Sources:** Local records `results/p2_full_*.json`, `results/p2more_nms07_*.json`, `results/p2more_merge07_*.json`, `results/c4_sweep.json`, `results/c4_tuning.json`; protocol `docs/phase2_amendment_c4_roster.md`.
+
+## 2026-11-21 to 2026-11-22 — Gemini (Task Mode), Phase II Tracker v3, Domain-Adapted Soccer ReID, Final Test & MVP
+
+**Prompts (chronological summary of student requests):**
+1. Uploaded repository archive and `GTAtrack.pdf` with latest agent output; asked to analyze the repo and design a Phase II improvement plan fitting within at most 2 Colab T4 GPU sessions (excluding test) without editing files yet.
+2. Uploaded `c4_confirm.json`; approved starting implementation and asked whether the design copies GTATrack directly or adds original domain contributions.
+3. Requested Python 3 Colab commands, pasted `tracker_v3` ablation output and `features_config.json` (revealing `mobilenet_v3_large` fallback), and ran a diagnostic cell printing tracklet counts and torso Lab color percentiles.
+4. Reported `torchreid` wheel-build error under Python 3.13, confirmed `git clone` + `PYTHONPATH` OSNet loading and T4 GPU availability, and uploaded `tracker_v3_ablation.json`, `tracker_v3_sweep.json`, `tracker_v3_tuning.json`, and `tracker_v3_1_mobilenet_ablation.json`.
+5. Confirmed 1.5 hours of non-test GPU remained, pasted CPU sweep results (`HOTA 0.4381`), ran domain-adapted `osnet_x1_0` fine-tuning (`train_reid.py`), and uploaded `tracker_v3_soccer_reid_ablation.json` and `tracker_v3_soccer_reid_tuning.json` (`HOTA 0.5011`).
+6. Approved generating the dated final-config amendment, Responsible AI model card, guarded `--allow-test` scorer, and Product MVP (CLI + Gradio app + unit tests), then executed the single `--allow-test` run and uploaded `p2_final_test.json`.
+7. Requested updates to `docs/experiment_log.md`, `docs/error_analysis_v2.md`, `README.md`, and `CONTRIBUTIONS.md` (without a viva sheet) plus local laptop run instructions for the Gradio app.
+
+**Use:**
+- Implemented CUDA FP16 + `torch.inference_mode()` speedup in `src/soccer_tracking/detect.py` (~2.8x faster T4 inference).
+- Implemented chunked ReID + green-masked torso CIE-Lab feature extraction (`src/soccer_tracking/features.py`), domain-adapted `osnet_x1_0` fine-tuning with Batch-Hard Triplet + Label-Smoothed CE loss (`src/soccer_tracking/train_reid.py`), Tracker v3 (`src/soccer_tracking/tracker_v3.py`: Kit-Aware Deep-EIoU + online Lab team gate + fast GTA-Link connector + calibrated official filter), ablation/tuning CLI (`src/soccer_tracking/tune_tracker_v3.py`), and unit tests (`tests/test_tracker_v3.py`).
+- Wrote `docs/phase2_amendment_tracker_v3.md`, `docs/phase2_final_config.md`, `docs/model_card.md`, `docs/error_analysis_v2.md`, `src/soccer_tracking/score_final_test.py`, `src/soccer_tracking/product.py`, `src/soccer_tracking/app.py`, and `tests/test_product.py`.
+- Updated `docs/experiment_log.md`, `README.md`, and `CONTRIBUTIONS.md` strictly from the student's verified TrackEval JSON records.
+
+**Verification:**
+- AI verified all Python modules via `py_compile` and ran the repository's `unittest` suite (`120` tests passing, `6` torch-dependent tests skipped in the CPU sandbox).
+- Student executed all GPU training, feature extraction, TrackEval validation ablations/sweeps, and the single held-out `--allow-test` run on Google Colab Tesla T4 (`git_dirty: false` in `results/p2_final_test.json`) and supplied every JSON result file.
+
+**Sources:** TrackEval (MIT), `deep-person-reid` / `osnet_x1_0` (MIT), Gradio (Apache-2.0), SciPy (BSD), and `GTAtrack.pdf` (ACM MMSports '25, CC BY 4.0). No external code was copied; all tracking, training, and product modules were written from scratch.

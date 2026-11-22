@@ -1,0 +1,157 @@
+{
+  "protocol": "docs/phase2_final_config.md",
+  "run": "p2more_test",
+  "detector": "P2-more (runs/p2_more_data/best.pt)",
+  "reid": "osnet_x1_0 fine-tuned on 4 train clips (reid_osnet/best_osnet_soccer.pt)",
+  "tracker": "Tracker v3 (Kit-Aware Deep-EIoU + GTA-Link)",
+  "frozen_params": {
+    "det_high": 0.78,
+    "det_low": 0.45,
+    "expand_ratios": [
+      0.0,
+      0.35,
+      0.7
+    ],
+    "prox_thresh": 0.8,
+    "app_weight": 0.5,
+    "app_thresh": 0.45,
+    "online_lab_gate": 42.0,
+    "max_age": 20,
+    "min_hits": 3,
+    "emb_alpha": 0.9,
+    "use_gta": true,
+    "max_gap_frames": 600,
+    "max_speed_px": 12.0,
+    "base_dist_px": 60.0,
+    "merge_cos_thresh": 0.2,
+    "team_color_gate": 45.0,
+    "min_track_len": 12,
+    "use_official_filter": false,
+    "official_lab_thresh": 46.0,
+    "gk_margin": 0.14,
+    "ref_min_len": 40,
+    "roster_k": null
+  },
+  "disclosure": "128057 was scored once in Phase I on the frozen Phase I pipeline; 132831 (3840x1504) tests resolution shift.",
+  "sequences": {
+    "128057_0_5976": {
+      "clip_id": "128057",
+      "role": "test",
+      "resolution": "4096x1080",
+      "start": 0,
+      "end": 5976,
+      "frames": 5976
+    },
+    "132831_0_5976": {
+      "clip_id": "132831",
+      "role": "test",
+      "resolution": "3840x1504",
+      "start": 0,
+      "end": 5976,
+      "frames": 5976
+    }
+  },
+  "results": {
+    "reference": {
+      "per_seq": {
+        "128057_0_5976": {
+          "HOTA": 0.4777871103951485,
+          "DetA": 0.7742770038338579,
+          "AssA": 0.2952297776450326,
+          "LocA": 0.8842410589719488,
+          "HOTA_at_0.5": 0.5400559922780913,
+          "FN_at_0.5": 10626.0,
+          "FP_at_0.5": 5050.0,
+          "n_gt": 131472,
+          "n_pred": 125896,
+          "IDSW": 689
+        },
+        "132831_0_5976": {
+          "HOTA": 0.3876262143432292,
+          "DetA": 0.5374657335684305,
+          "AssA": 0.28021009869723323,
+          "LocA": 0.8691401202134938,
+          "HOTA_at_0.5": 0.4435887040556823,
+          "FN_at_0.5": 6166.0,
+          "FP_at_0.5": 69467.0,
+          "n_gt": 131472,
+          "n_pred": 194773,
+          "IDSW": 683
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.43270666236918887,
+        "DetA": 0.6558713687011442,
+        "AssA": 0.28771993817113295,
+        "LocA": 0.8766905895927213,
+        "IDSW": 686.0
+      },
+      "pooled": {
+        "HOTA": 0.4265755678176472,
+        "DetA": 0.6334088775021435,
+        "AssA": 0.2878210917948109,
+        "LocA": 0.8766028798867871,
+        "HOTA_at_0.5": 0.48493206283837564,
+        "FN_at_0.5": 16792.0,
+        "FP_at_0.5": 74517.0,
+        "n_gt": 262944,
+        "n_pred": 320669
+      }
+    },
+    "trackeval": {
+      "per_seq": {
+        "128057_0_5976": {
+          "HOTA": 0.47778752330822954,
+          "DetA": 0.7742774694167371,
+          "AssA": 0.2952301615669691,
+          "LocA": 0.884240774980361,
+          "FP": 3336.0,
+          "FN": 8912.0,
+          "IDSW": 689.0,
+          "IDF1": 0.4801063069223835
+        },
+        "132831_0_5976": {
+          "HOTA": 0.3876268629905224,
+          "DetA": 0.537467338910795,
+          "AssA": 0.2802103172842014,
+          "LocA": 0.8691397536609436,
+          "FP": 67955.0,
+          "FN": 4654.0,
+          "IDSW": 685.0,
+          "IDF1": 0.3618078437983724
+        }
+      },
+      "mean_over_seqs": {
+        "HOTA": 0.432707193149376,
+        "DetA": 0.655872404163766,
+        "AssA": 0.2877202394255852,
+        "LocA": 0.8766902643206523,
+        "FP": 35645.5,
+        "FN": 6783.0,
+        "IDSW": 687.0,
+        "IDF1": 0.42095707536037796
+      },
+      "pooled": {
+        "HOTA": 0.4265760661254081,
+        "DetA": 0.6334100922278809,
+        "AssA": 0.2878212732663038,
+        "LocA": 0.8766025482231978,
+        "FP": 71291.0,
+        "FN": 13566.0,
+        "IDSW": 1374.0,
+        "IDF1": 0.41397638503597417
+      }
+    },
+    "trackeval_error": null
+  },
+  "environment": {
+    "utc": "2026-11-22T13:45:09+00:00",
+    "python": "3.13.16",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "f20b286070613a4cf66a36ef9082218501581854",
+    "git_dirty": false,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/score_final_test.py --allow-test --run p2more_test --det-root /content/drive/MyDrive/soccer_runs/detections_p2 --out /content/drive/MyDrive/soccer_runs/p2_final_test.json"
+  }
+}

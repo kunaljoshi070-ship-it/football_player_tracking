@@ -2,7 +2,7 @@
 
 **Project:** Sports Player Tracking and Tactical Event Analyzer
 **Language:** Python (professor-approved)
-**Current phase:** Phase II (Phase I is finished and frozen; see `docs/phase2_plan.md`)
+**Current phase:** Phase II complete (Phase I is finished and frozen; see `docs/phase2_plan.md` and `docs/phase2_final_config.md`)
 
 ## Phase I scope
 
@@ -16,238 +16,75 @@ The selected dataset is **SoccerTrack v2, release v1.2**, using only its annotat
 - [`docs/phase1_proposal.md`](docs/phase1_proposal.md): one-page proposal and experiment hypothesis.
 - [`docs/dataset_card.md`](docs/dataset_card.md): source, access, license, and sample plan.
 - [`docs/architecture.md`](docs/architecture.md): the detector's layers, tensor shapes, frozen and trainable parts, loss, training choices and what is original.
-- [`docs/experiment_log.md`](docs/experiment_log.md): every reported run with its setup, result and record file.
-- [`docs/phase2_plan.md`](docs/phase2_plan.md): Phase II game plan to beat GTATrack: targets, protocol, workstreams, gates, risks, handoff protocol and status board.
-- [`docs/gtatrack_comparison.md`](docs/gtatrack_comparison.md): how the published GTATrack paper works, what we have achieved, and ways our version could do better.
-- [`docs/phase1_summary.md`](docs/phase1_summary.md): plain-language summary of the whole of Phase I (dataset, background, method, baseline comparison, tracking study, errors, limits).
-- [`docs/error_analysis.md`](docs/error_analysis.md): typed errors of the fine-tuned and pretrained detector on validation, with the reviewed image panels.
-- [`data/manifest.csv`](data/manifest.csv): record only the selected dataset version, splits, clip IDs, and permitted metadata.
-- [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md): individual and prompt-wise contribution record required by the assignment.
+- [`docs/experiment_log.md`](docs/experiment_log.md): every reported run (Phase I and Phase II) with its setup, result and record file.
+- [`docs/phase2_plan.md`](docs/phase2_plan.md): Phase II game plan, targets, protocol, workstreams, gates, risks, handoff protocol and status board.
+- [`docs/phase2_final_config.md`](docs/phase2_final_config.md): dated final configuration frozen before the single held-out Phase II `--allow-test` run.
+- [`docs/model_card.md`](docs/model_card.md): Responsible AI model card (intended/non-intended use, metrics, limitations, risks).
+- [`docs/error_analysis.md`](docs/error_analysis.md) and [`docs/error_analysis_v2.md`](docs/error_analysis_v2.md): Phase I typed detector errors and Phase II full-clip / resolution-shift error analysis.
+- [`docs/gtatrack_comparison.md`](docs/gtatrack_comparison.md): how the published GTATrack paper works and how our pipeline compares.
+- [`data/manifest.csv`](data/manifest.csv): dataset version, splits, clip IDs, and verified SHA-256 hashes.
+- [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md): individual, source-log, and prompt-wise AI contribution record.
 
-## Phase split
+## Phase II Final Results (Full 4-Minute Clips, TrackEval)
 
-The handout scores Phase I and Phase II at 50 marks each. Phase I focuses on problem framing, data audit/splits, a working baseline and initial metric, architecture/training explanation, reproducibility, and an experiment plan. Keep Phase I to one detector and a small tracking comparison. The compendium's additional segmentation, action/event, second-architecture, sequence-model, and VAE work is for Phase II unless the instructor directs otherwise.
+Protocol frozen prior to test in [`docs/phase2_final_config.md`](docs/phase2_final_config.md). Validation clips (`117093`, `128058`) were used for epoch selection and tracker tuning; held-out test clips (`128057`, `132831`) were scored **once** via `--allow-test`. Reserve clips (`118578`, `132877`) remain untouched for the live unseen viva test.
 
-The compendium names C/C++/Java generically, while the professor has permitted Python for this project. Keep the professor's approval available for the viva and report.
+### Validation Ablation (Mean over 117093 & 128058)
 
-## Minimal workflow
+| Stage | HOTA | DetA | AssA | LocA | FP | FN | IDSW | IDF1 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Phase I (`p1model + IoU`) | 0.3188 | 0.7063 | 0.1446 | 0.8790 | 19,768.0 | 6,392.0 | 1,483.0 | — |
+| Phase II (`P2-more + Tracker v2`) | 0.3681 | 0.7613 | 0.1792 | 0.8888 | 9,716.5 | 7,120.5 | 983.0 | 0.2900 |
+| `+ v3 EIoU + Online Lab Gate` (`v3_eiou_only`) | 0.3583 | 0.7798 | 0.1654 | 0.8894 | 5,257.0 | 7,488.5 | 945.5 | 0.2940 |
+| `+ Pretrained OSNet + GTA-Link` | 0.4049 | 0.7779 | 0.2113 | 0.8893 | 5,204.5 | 7,522.0 | 874.0 | 0.3878 |
+| `+ Soccer-Finetuned OSNet + GTA-Link` (`dh=0.75`) | 0.4943 | 0.7791 | 0.3143 | 0.8896 | 5,219.5 | 7,519.0 | 812.0 | 0.4981 |
+| **Final Frozen Config** (`dh=0.78, dl=0.45, cos=0.20, gap=600`) | **0.5011** | **0.7812** | **0.3222** | **0.8898** | **4,615.5** | 7,711.0 | **787.0** | **0.5198** |
+| *GTATrack ByteTrack baseline (paper Table 3)* | *0.42* | *0.74* | *0.26* | *0.84* | *961* | *10,115* | *630* | — |
+| *GTATrack full (paper Table 3, leaderboard)* | *0.60* | *0.76* | *0.47* | *0.84* | *982* | *5,454.5* | *331.5* | — |
 
-1. Confirm access to the SoccerTrack v2 files and verify annotations match the selected videos.
-2. Freeze a small sample and split by match in `data/manifest.csv` before evaluating.
-3. Build the Python/PyTorch detector baseline and record its initial metric and training settings.
-4. Compare detections with a simple tracker on the same frames; report results and errors.
-5. Record each external source and every permitted generative-AI prompt in `CONTRIBUTIONS.md`.
+### Held-Out Test Results (`results/p2_final_test.json`, `--allow-test`, Single Run)
 
-Use regular ChatGPT Chat for quick planning and prompt drafting. Use this repository as the source of truth; manually pass Claude/Gemini only safe project context and review their output yourself. The assignment requires faculty permission for generative-AI use.
+| Clip | Resolution | HOTA | DetA | AssA | LocA | FP | FN | IDSW | IDF1 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **`128057`** *(matched res; disclosed Phase I clip)* | `4096×1080` | **0.4778** | **0.7743** | **0.2952** | **0.8842** | **3,336** | 8,912 | **689** | **0.4801** |
+| **`132831`** *(resolution-shift check)* | `3840×1504` | **0.3876** | 0.5375 | **0.2802** | **0.8691** | 67,955 | **4,654** | **685** | 0.3618 |
+| **Test Mean** | — | **0.4327** | 0.6559 | 0.2877 | 0.8767 | 35,645.5 | 6,783.0 | 687.0 | 0.4210 |
 
-## Data loading and visualization utility
+- On matched-resolution held-out test (`128057`), the frozen pipeline generalizes closely (`0.4778` vs. val `0.5011`), beats GTATrack on `DetA` (`0.774` vs. `0.76`) and `LocA` (`0.884` vs. `0.84`), beats GTATrack's ByteTrack baseline (`0.42`), and runs at `0.36–0.43 s/frame` on a T4 (FP16, `batch_size=5`).
+- On the resolution-shift clip (`132831`, `3840×1504`), ReID + tracking generalize steadily (`AssA 0.280`, `IDSW 685`, `LocA 0.869`), while the 40% taller frame exposes benches and stands outside the pitch, inflating FP to `67,955` (analyzed in [`docs/error_analysis_v2.md`](docs/error_analysis_v2.md)).
 
-`src/soccer_tracking/mot.py` reads and validates MOT rows (`frame,id,x,y,width,height,...`; `(x, y)` is the box's top-left corner in pixels). `src/soccer_tracking/visualize.py` saves one video frame with its annotated boxes and track IDs. No new dependencies: it uses `opencv-python` and `numpy` from `requirements.txt`.
+## Offline Tactical Analyzer MVP (CLI & Gradio App)
 
-Place each clip and its label file (git-ignored) in `data/raw/` as `<id>.mp4` and `<id>.txt`; the clip ids and their Phase I roles are in `data/manifest.csv`. Then run from the repository root (example for training clip `118575`):
+`src/soccer_tracking/product.py` provides input validation, track-confidence tiers, crowding/low-score flags, and exports four artifacts (`annotated.mp4`, `trajectories.csv`, `heatmap.png`, `summary.json`). `src/soccer_tracking/app.py` wraps it in a thin Gradio UI with **Cached Demo Mode** (instant on CPU) and **Live Video Segment Mode** (GPU recommended).
+
+### Running Locally on a Laptop (Windows PowerShell, CPU Cached Demo Mode)
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install gradio
+$env:PYTHONPATH = "src"
+python -m soccer_tracking.app
+# Open http://127.0.0.1:7860 in your browser (use Cached Demo Mode on CPU)
+```
+
+Or via CLI directly:
 
 ```powershell
 $env:PYTHONPATH = "src"
-python -m soccer_tracking.visualize --video data/raw/118575.mp4 --annotations data/raw/118575.txt --frame 0
-# writes data/processed/118575_frame0.jpg (git-ignored); use --output to choose another path
+python -m soccer_tracking.product cached `
+  --video data/raw/117093.mp4 `
+  --det-dir data/processed/detections_p2/p2more_full `
+  --clip-id 117093 --start 4000 --end 4200 `
+  --out-dir data/processed/demo_out
 ```
 
-**Frame numbering.** `--frame` is a **0-based video frame index** (OpenCV convention). The annotation frame looked up is `--frame + --annotation-base`. `--annotation-base` is `0` by default because all ten downloaded label files were measured to start at frame 0 (for example `117092.txt`: frames 0–5999, 22 boxes per frame); pass `1` only for a 1-based MOT file. Nothing is shifted unless you ask, and the mapping used is printed on every run. By default OpenCV *seeks* to the frame, which can be imprecise for some codecs; add `--sequential` for slow but frame-exact decoding when checking alignment.
-
-Errors (missing file, malformed row with its line number, non-positive/non-finite box, duplicate `(frame, id)`, frame without annotations, frame beyond the video) exit with code 2 and a message. Boxes outside the image are clipped and reported.
-
-Tests use only synthetic data generated at test time:
+### Running Unit Tests
 
 ```powershell
 $env:PYTHONPATH = "src"
 python -m unittest discover -s tests -v
 ```
 
-## Detector data pipeline
+## Environment & Phase I Reference
 
-`src/soccer_tracking/data.py` (with `tiles.py`) turns the manifest into training tiles. Players are small (in 117092 the median box is about 20 x 41 px), and resizing a full 4096x1080 frame to a detector's default input would shrink them to about 7 x 14 px, so frames are cut into **native-scale tiles** instead.
-
-```powershell
-$env:PYTHONPATH = "src"
-python -m soccer_tracking.data audit      # manifest checks + box-size and tiling statistics (add --verify-hashes to re-hash files)
-python -m soccer_tracking.data extract    # decode sampled frames to data/processed/frames/<clip_id>/ (git-ignored)
-```
-
-```python
-from soccer_tracking.data import load_manifest, SoccerTilesDataset, collate
-train = SoccerTilesDataset(load_manifest(splits=["train"]), stride=25, augment=True, seed=0)
-image, target = train[0]   # float32 CHW RGB in [0, 1]; target: boxes (xyxy, tile pixels), labels (all 1 = player), image_id
-train.meta(0)              # clip id, frame, tile window, flipped, track ids: maps tile output back to full-frame coordinates
-```
-
-Settings (all are arguments, defaults shown): frames sampled every 25th (1 per second at 25 fps) and stored as JPEG quality 95; tiles 1024x1080 with 128 px overlap (5 tiles per 4096x1080 frame); a box is kept in a tile if at least 50% of it is visible and it is at least 4 px in both directions; horizontal flip with p = 0.5 only when `augment=True`, decided by `default_rng([seed, epoch, index])` (call `set_epoch`). Splits are whole matches taken from `data/manifest.csv`; the loader refuses a clip listed twice, an unknown split, a frame-size mismatch, or annotations that do not span the video's frames.
-
-Known limits: a player cut by a tile edge is not labelled in the tile where less than half of them is visible (they appear whole in the neighbouring tile), so tile-level detections must be merged (for example with NMS) before frame-level evaluation or tracking. Tiles are cut at native scale, so Phase I results are for this camera setup and 4096x1080 clips.
-
-## Pretrained baseline and evaluation
-
-`src/soccer_tracking/evaluate.py` runs a detector over the tiles, merges the tile detections into full-frame boxes (`detect.py`: shift to frame coordinates, drop boxes cut by an interior tile border, NMS across tiles) and scores them against the labels (`metrics.py`: AP at IoU 0.5 and 0.75, plus precision, recall and F1 at a score threshold). The Phase I **baseline** is torchvision's COCO-pretrained RetinaNet (ResNet-50 FPN) used as-is, keeping only the `person` class as `player`; no training is involved, so it runs on a CPU.
-
-```powershell
-$env:PYTHONPATH = "src"
-python -m soccer_tracking.evaluate --split val --weights coco --stride 250
-# writes results/baseline_coco_val.json (settings, versions, git revision, metrics); the first run downloads the COCO weights
-```
-
-`--weights` also accepts a fine-tuned `.pt` checkpoint from `train.py`. `--stride` must be a multiple of the extraction stride (25); the default 250 evaluates 24 frames per clip so a CPU run stays short (use 125 or 25 for a larger, less noisy sample). The test split is refused unless `--allow-test` is passed: use it once, at the end, never to choose settings. Metrics are computed on full frames, with ground-truth boxes clipped to the frame. AP uses all-point interpolation, so it is close to but not identical to COCO's 101-point AP.
-
-## Training on a hosted GPU (Colab)
-
-`src/soccer_tracking/train.py` fine-tunes the COCO-pretrained RetinaNet on the train tiles (one class, `player`): SGD with momentum, linear warmup then cosine decay, gradient clipping, mixed precision on CUDA, validation (full-frame AP) after every epoch, early stopping on validation AP50, and a best/last checkpoint. It writes `runs/<run-name>/` with `config_<utc>.json` (all settings, versions, git revision, GPU), `iterations.csv` and `metrics.csv` (learning curves), `curves.png`, `summary.json` and the checkpoints (`*.pt` is git-ignored). A laptop CPU is far too slow (inference alone took about 4 s per tile); use a GPU session, for example Colab (Runtime, Change runtime type, GPU). Colab already has torch, torchvision, OpenCV, NumPy and matplotlib.
-
-Download the clips inside Colab from Hugging Face with your own account; do not upload them from your laptop, and never paste your token into a cell or commit it. Store it as a Colab secret named `HF_TOKEN` (the token must belong to the account that accepted the dataset conditions). Storage in a Colab session is temporary.
-
-```python
-# cell 1: code and data
-!git clone <your-repo-url> repo
-%cd repo
-!pip -q install huggingface_hub
-import os, shutil
-from google.colab import userdata
-from huggingface_hub import hf_hub_download, login
-login(token=userdata.get("HF_TOKEN"))
-os.makedirs("data/raw", exist_ok=True)
-for i in ["118575", "118576", "117093", "128057"]:          # the clips listed in data/manifest.csv
-    for ext, folder in (("mp4", "mot/clips"), ("txt", "mot")):
-        path = hf_hub_download("atomscott/soccertrack-v2", f"{folder}/{i}.{ext}", repo_type="dataset")
-        shutil.copy(path, f"data/raw/{i}.{ext}")
-```
-
-```python
-# cell 2: verify, extract, test, train, evaluate (the test split stays untouched)
-%cd /content/repo
-!PYTHONPATH=src python -m soccer_tracking.data audit --verify-hashes
-!PYTHONPATH=src python -m soccer_tracking.data extract
-!PYTHONPATH=src python -m unittest discover -s tests
-!PYTHONPATH=src python -m soccer_tracking.train --run-name finetune --epochs 8
-!PYTHONPATH=src python -m soccer_tracking.evaluate --split val --weights runs/finetune/best.pt --stride 125
-```
-
-If you see `No module named 'soccer_tracking'`, run `!pwd` and `!ls src/soccer_tracking`: you must be in the cloned repo (`/content/repo`) and the listing must include `train.py`. If the folder is missing the runtime was reset (the clone and downloads are wiped, so rerun cell 1); if `train.py` is missing the latest code was not pushed (`git push` from your laptop, then `!git pull`). Run a quick speed and memory check before the full run: `!PYTHONPATH=src python -m soccer_tracking.train --run-name smoke --epochs 1 --max-iters-per-epoch 20`.
-
-`--verify-hashes` confirms the downloaded files are byte-identical to the ones recorded in `data/manifest.csv`. If the GPU runs out of memory add `--batch-size 2`; to continue an interrupted run use `--resume runs/finetune/last.pt`. Copy `runs/finetune/` (the small CSV, JSON and PNG files; the checkpoint if you want it) and `results/` back to your computer before the session ends, then commit the small files only.
-
-## Results
-
-Frozen protocol: [`docs/phase1_proposal.md`](docs/phase1_proposal.md) (amendment of 2026-10-21). The validation clip (117093) was used to choose the epoch and the tracker settings; the test match (128057) was scored once for each model and once for the tracking comparison, and the results are reported as obtained.
-
-**Detector** (every 125th frame, 48 frames per clip; same tiling, merge and metric code; precision and recall at score 0.5 and IoU 0.5):
-
-| Model | Clip | AP50 | AP75 | Precision | Recall |
-|---|---|---|---|---|---|
-| Pretrained COCO RetinaNet, no training | val 117093 | 0.657 | 0.462 | 0.740 | 0.705 |
-| Fine-tuned (matches 118575, 118576; epoch 3 of 6) | val 117093 | 0.959 | 0.860 | 0.874 | 0.958 |
-| Pretrained COCO RetinaNet, no training | **test 128057** | 0.788 | 0.560 | 0.849 | 0.791 |
-| Fine-tuned | **test 128057** | 0.950 | 0.830 | 0.893 | 0.951 |
-
-Criterion 1 (test: at least +0.10 AP50 and +0.15 AP75 over the pretrained model): +0.162 and +0.270, **met**. The gain is smaller on test than on validation because the pretrained model does better on the test match, whose players are larger (median box height 50.8 px against 44.0 px in training); the fine-tuned model scores about the same on both clips. Fine-tuning ran on a Colab T4 (batch 4, SGD peak learning rate 0.005, warmup then cosine decay, mixed precision, seed 0, about 42 minutes); curves in `runs/finetune/curves.png`.
-
-**Tracking** (three segments of 250 consecutive frames per clip; both arms use the same detections at score 0.5; tracker settings chosen on validation: `iou_thr` 0.4, `max_age` 1, `min_hits` 1, motion prediction on):
-
-| Arm | Clip | Interruptions per player track | F1 | MODA | ID switches | ids per player |
-|---|---|---|---|---|---|---|
-| Detector-only | val | 0.985 | 0.926 | 0.841 | n/a | n/a |
-| IoU tracker | val | 0.652 | 0.914 | 0.812 | 98 | 2.44 |
-| Detector-only | **test** | 1.545 | 0.912 | 0.811 | n/a | n/a |
-| IoU tracker | **test** | 0.788 | 0.897 | 0.774 | 140 | 2.98 |
-
-Criterion 2 (test: interruptions per track at least 25% lower, F1 lower by at most 0.02): **49.0% lower** (all 3 segments improved) and **F1 0.015 lower**, **met**. Read this together with the cost: the tracker bridges one-frame misses, which removes interruptions, but it also adds false-positive boxes (MODA falls by 0.037 on test) and its ids are not reliable (about 3 different ids per player in 10 seconds, 140 switches). The tracks are image-plane continuity aids, not player identities. Limits: one validation and one test match, three segments each, small counts (102 versus 52 interruptions on test), a deliberately simple tracker.
-
-**Errors (validation, fine-tuned):** 44 of 1,056 players missed and 146 false positives. Overlapping players cause most problems on both sides (37 of the 44 misses are crowded players; the duplicate and many poorly placed false positives are one box over two players), and in the reviewed samples the "false positives" that overlap no labelled player were match officials or unlabelled people. Details in [`docs/error_analysis.md`](docs/error_analysis.md).
-
-**Runtime:** pretrained model on the laptop CPU about 20 s per frame (5 tiles); fine-tuned model on a Colab T4 about 1.1 s per frame including video decoding.
-
-## Tracking comparison (detector-only vs IoU tracker)
-
-`src/soccer_tracking/tracker.py` is a deliberately simple IoU tracker (greedy association, optional linear motion prediction, short-gap coasting, no appearance model). `track_metrics.py` defines the measures (F1, MODA, fragmentation per track, ID switches, ids per track, MOTA) and `track_eval.py` runs the protocol frozen in the "Amendment" of [`docs/phase1_proposal.md`](docs/phase1_proposal.md): three 250-frame segments per clip (starting at frames 500, 2500, 4500), both arms on the same saved detections at score >= 0.5. `detect` needs a GPU (run it in Colab, after the training steps above, with the clips in `data/raw/`); `tune` and `evaluate` need only NumPy.
-
-```python
-# Colab, in /content/repo (git pull first); best.pt is the checkpoint on your Drive
-!PYTHONPATH=src python -m soccer_tracking.track_eval detect   --split val --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt
-!PYTHONPATH=src python -m soccer_tracking.track_eval tune     --split val       # grid search on validation only -> results/tracker_tuning.json
-!PYTHONPATH=src python -m soccer_tracking.track_eval evaluate --split val       # detector-only vs tracker on validation
-```
-
-Commit `results/tracker_tuning.json` (and push) before touching the test match: the tracker settings must be frozen first. Then, once and only once:
-
-```python
-!PYTHONPATH=src python -m soccer_tracking.track_eval detect   --split test --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt --allow-test
-!PYTHONPATH=src python -m soccer_tracking.track_eval evaluate --split test --allow-test
-```
-
-For criterion 1 (detector against the pretrained baseline on the test match) extract the test frames first, then score both models once each:
-
-```python
-!PYTHONPATH=src python -m soccer_tracking.data extract --splits test
-!PYTHONPATH=src python -m soccer_tracking.evaluate --split test --weights coco --stride 125 --allow-test --out results/test_baseline_coco.json
-!PYTHONPATH=src python -m soccer_tracking.evaluate --split test --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt --stride 125 --allow-test --out results/test_finetuned.json
-```
-
-`tune` refuses the test split and `evaluate`/`detect` refuse it without `--allow-test`. Detections are saved to `data/processed/detections/finetune/` (git-ignored); the JSON files in `results/` are small and are committed. `tune` and `evaluate` also print and save a per-segment breakdown (gaps, F1 and ID switches for each 250-frame segment, plus how many segments the tracker improves), so you can see whether the three segments agree. `evaluate` prints PASS or FAIL for each frozen criterion. Fragmentation counts interruptions (a run of unmatched frames between two matched frames) per player track, so it is defined for detector-only output too; ids are image-plane track ids, not player identities.
-
-## Error analysis
-
-`src/soccer_tracking/errors.py` explains the detector's mistakes at the operating point (score >= 0.5, IoU >= 0.5) on the same sampled frames as `evaluate.py` (default: the validation clip, every 125th frame). Missed players are typed `merged_with_neighbour`, `low_score`, `poorly_localized` or `missed`; false positives are typed `duplicate`, `poorly_localized` or `no_gt_overlap` (overlaps no labelled player: an unlabelled person such as a referee or substitute, or background). It also reports recall by box height, by crowding (share of a player covered by a neighbour's box) and by distance to a tile border, and precision by score band.
-
-```python
-# Colab, in /content/repo, with the validation clip in data/raw/
-!PYTHONPATH=src python -m soccer_tracking.data extract --splits val
-!PYTHONPATH=src python -m soccer_tracking.errors --split val --weights /content/drive/MyDrive/soccer_runs/finetune/best.pt
-!PYTHONPATH=src python -m soccer_tracking.errors --split val --weights coco --out-dir results/errors_val_baseline --images-dir data/processed/errors_val_baseline   # optional: the pretrained model for contrast
-```
-
-Counts and typed rows are written to `results/errors_<split>/` (`summary.json`, `errors.csv`; no pixels, safe to commit). Image panels of sampled errors (`fp_examples.jpg`, `fn_examples.jpg`: yellow = labelled players, cyan = confident detections, red = the error) go to `data/processed/errors_<split>/`, which is git-ignored because they contain frames of people: keep them local and do not upload them to AI services; describe what you see in words. **Reading the panels.** Each montage groups up to 8 randomly chosen examples (seed 0) per error type, so it is a sample for illustration, not a count: report counts and percentages from `summary.json`, and describe the panels as "k of 8 examples show ...". For each type, note what is inside the red box (a referee, substitute or staff member; an on-pitch player who has no yellow label box, which would be a labelling gap; a non-person such as a line, shadow or board; two overlapping players; a box that is too large, too small or shifted; a distant, blurred or half-hidden player) and whether the same pattern repeats.
-
-The test split needs `--allow-test` and is for a descriptive look only: never change the model, the tiling or the tracker because of what test errors show.
-
-## Model description
-
-`src/soccer_tracking/describe_model.py` builds the detector exactly as `train.py` does (torchvision RetinaNet ResNet-50 FPN, COCO weights, classification output layer replaced for 2 classes), passes one random 1024x1080 tile through it with forward hooks, and prints and saves (`results/model_description.json`) the parameter counts per component (total, trainable, frozen), which ResNet stages are frozen, the normalisation layers, every stage's output tensor shape, the anchor setup, and the loss, matching and post-processing settings read from the live model. `docs/architecture.md` is written from this output.
-
-```powershell
-$env:PYTHONPATH = "src"
-python -m soccer_tracking.describe_model
-```
-
-The COCO weights come from the local torch cache (downloaded by the baseline run). `--weights none` works offline but builds a model with ordinary BatchNorm and every layer trainable, so it does not describe the trained configuration.
-
-## Environment
-
-Python 3.13 (3.13.7 on the laptop, 3.13.15 on Colab). `requirements.txt` pins the exact versions used on the laptop (CPU) and records the Colab versions used for training and the test evaluation in its comments. To set up a clean environment and run the tests:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-$env:PYTHONPATH = "src"
-python -m unittest discover -s tests
-```
-
-If PowerShell refuses to run `Activate.ps1` ("running scripts is disabled on this system"), either allow scripts for that window only with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` (it resets when the window closes) or skip activation and call the environment's Python directly: `.\.venv\Scripts\python.exe -m pip install -r requirements.txt` and `.\.venv\Scripts\python.exe -m unittest discover -s tests`.
-
-`.venv/` is git-ignored. GPU training needs a CUDA build of torch (see the note in `requirements.txt`); Colab already provides one. Extracted frames were produced separately on the laptop (OpenCV 4.13.0) and on Colab (OpenCV 4.14.0); JPEG output may differ very slightly between builds, which was not measured.
-
-## Phase II validation-window results (2026-11-20)
-
-These are development results on frames 1000–1999 of validation clips 117093 and 128058, except B3, which used clip 117093 only. They are not full-clip or final-test results. P2-more epoch selection used these same validation clips, so treat its scores as development evidence. Do not compare these window scores directly with GTATrack's full-clip challenge result.
-
-**P2-more training:** six epochs on 118575, 118576, 118577 and 117092; validation on 117093 and 128058; seed 0; Colab T4; best epoch 4 selected by mean AP50/AP75 (AP50 0.9656, AP75 0.8841). The IoU tracker settings were inherited from Phase I and were not retuned.
-
-TrackEval mean over the two validation clips:
-
-| Arm | Model | HOTA | DetA | AssA | LocA | FP | FN | IDSW |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| Detector-only | Phase I T0 | 0.0251* | 0.6694 | 0.001* | 0.8617 | 2938.0 | 2281.0 | 19697.0* |
-| Detector-only | P2-more | 0.0259* | 0.7126 | 0.001* | 0.8704 | 1712.5 | 2293.5 | 19684.5* |
-| IoU tracker | Phase I T0 | 0.4788 | 0.6492 | 0.3596 | 0.8582 | 3466.5 | 2172.0 | 371.5 |
-| IoU tracker | P2-more | 0.5029 | 0.6955 | 0.3697 | 0.8671 | 2136.5 | 2154.0 | 342.5 |
-
-*Detector-only identity metrics are not meaningful because each detection receives a unique ID. FP/FN/IDSW shown are TrackEval mean-over-sequence values. See [`p2_more_detector.json`](results/p2_more_detector.json) and [`p2_more_iou.json`](results/p2_more_iou.json).
-
-**B3 combined NMS/merge trial** (117093, frames 1000–1999): the supplied `detect_config.json` confirms it used `/content/drive/MyDrive/soccer_runs/p2_more_data/best.pt`, NMS threshold 0.7 and merge IoU 0.7. The run name `p1model_nms07` is misleading: these are P2-more weights. Against P2-more on the same clip/window, detector DetA changed 0.6062→0.5970, FP 2479→4537 and FN 3972→2911; IoU-tracker HOTA changed 0.3959→0.3739, DetA 0.5890→0.5640, AssA 0.2738→0.2573, FP 2976→5648, FN 3757→2817 and IDSW 522→756. This joint change reduced misses but substantially increased false positives and lowered tracking metrics. Since NMS and merge IoU changed together, the trial cannot identify which change caused the effect. See [`p2_nms07_detector.json`](results/p2_nms07_detector.json), [`p2_nms07_iou.json`](results/p2_nms07_iou.json), and the Colab `detect_config.json` (kept outside Git).
-**Static post-filter:** the four-setting sweep on both arms was rejected. For example, fraction 0.9 / IoU 0.8 lowered tracker HOTA from 0.4788 to 0.4491 and increased mean FN from 2172.0 to 2518.5, despite a modest FP reduction. The complete results are in [`results/p2_static_*.json`](results/).
+Python 3.13 (`requirements.txt` pins core packages; `gradio` is an optional UI dependency, and `TrackEval` / `deep-person-reid` are MIT-licensed external clones added to `PYTHONPATH` for TrackEval scoring and OSNet ReID). Phase I baseline, training, error analysis, and architecture details remain preserved in `docs/phase1_proposal.md`, `docs/phase1_summary.md`, `docs/architecture.md`, `docs/error_analysis.md`, and `results/`.

@@ -1,6 +1,6 @@
-# Experiment log (Phase I)
+# Experiment log (Phase I & Phase II)
 
-Every run whose result is reported. Dates are UTC from the result files where available; for blank fields open the named file (`environment.git_revision` and `git_dirty` are recorded inside each JSON). The protocol was frozen in `docs/phase1_proposal.md` (amendment of 2026-10-21) before the tracking and test results existed. Test-split runs are marked **TEST**; each was run once.
+Every run whose result is reported. Dates are UTC from the result files where available; for blank fields open the named file (`environment.git_revision` and `git_dirty` are recorded inside each JSON). The Phase I protocol was frozen in `docs/phase1_proposal.md` (amendment of 2026-10-21) before the tracking and test results existed. Test-split runs are marked **TEST**; each was run once.
 
 | ID | Date | What | Setup | Key result | Record |
 |---|---|---|---|---|---|
@@ -20,19 +20,38 @@ Notes: E1 and E2 were run on a laptop CPU, E4 and E8-E9 on a Colab T4, so the ba
 
 The P2-more six-epoch run was resumed from the epoch-4 `last.pt` checkpoint after an interrupted partial epoch-5 attempt. The iteration log was deduplicated by iteration, keeping the latest row; 47 duplicate iteration IDs were removed. Two timestamped config files record the original and resumed invocations. Best epoch 4 was selected by mean AP50/AP75 (selected value 0.9248; AP50 0.9656; AP75 0.8841).
 
-## Phase II evaluation log (2026-11-21)
+## Phase II evaluation log (2026-11-21 to 2026-11-22)
 
-All metrics below are from the `trackeval` sections of the named JSON files (`trackeval_error: null`). Full-clip validation scores are development results: P2-more's epoch had been selected using these validation clips. Each clip contributes equally to the reported per-clip mean.
+All metrics below are from the `trackeval` sections of the named JSON files (`trackeval_error: null`). Full-clip validation scores are development results: P2-more's epoch had been selected using these validation clips (`117093` frames 0–5975 and `128058` frames 0–5980). Each clip contributes equally to the reported per-clip mean.
 
-| Run | Setup | Mean HOTA / DetA / AssA / LocA | Mean FP / FN / IDSW | Records |
+### Full-Clip Validation Ablation (117093 & 128058)
+
+| Run | Setup | Mean HOTA / DetA / AssA / LocA | Mean FP / FN / IDSW / IDF1 | Records |
 |---|---|---|---|---|
-| T0 `p1model_full`, IoU | Phase I weights and frozen Phase I IoU tracker; validation frames 0–5975 (117093) and 0–5980 (128058) | 0.3188 / 0.7063 / 0.1446 / 0.8790 | 19,768 / 6,392 / 1,483 | `results/p2_full_t0_iou.json` |
-| T0 `p1model_full`, IoU-v2 | Same weights; tracker-v2 settings `det_high=0.6`, `det_low=0.3`, `match_iou=0.3`, `max_age=5`, `min_hits=3` | 0.3439 / 0.7175 / 0.1659 / 0.8796 | 15,972 / 7,544 / 1,126.5 | `results/p2_full_t0_iou_v2.json` |
-| P2-more `p2more_full`, IoU | P2-more weights and frozen Phase I IoU tracker; same full validation ranges | 0.3436 / 0.7557 / 0.1575 / 0.8884 | 12,097 / 6,143 / 1,356.5 | `results/p2_full_p2more_iou.json` |
-| P2-more `p2more_full`, IoU-v2 | P2-more weights and the same tracker-v2 settings as above | 0.3681 / 0.7613 / 0.1792 / 0.8888 | 9,716.5 / 7,120.5 / 983 | `results/p2_full_p2more_iou_v2.json` |
+| T0 `p1model_full`, IoU | Phase I weights and frozen Phase I IoU tracker | 0.3188 / 0.7063 / 0.1446 / 0.8790 | 19,768 / 6,392 / 1,483 / — | `results/p2_full_t0_iou.json` |
+| T0 `p1model_full`, IoU-v2 | Phase I weights; tracker-v2 (`det_high=0.6, det_low=0.3, match_iou=0.3, max_age=5, min_hits=3`) | 0.3439 / 0.7175 / 0.1659 / 0.8796 | 15,972 / 7,544 / 1,126.5 / — | `results/p2_full_t0_iou_v2.json` |
+| P2-more `p2more_full`, IoU | P2-more weights and frozen Phase I IoU tracker | 0.3436 / 0.7557 / 0.1575 / 0.8884 | 12,097 / 6,143 / 1,356.5 / — | `results/p2_full_p2more_iou.json` |
+| P2-more `p2more_full`, IoU-v2 | P2-more weights and tracker-v2 | 0.3681 / 0.7613 / 0.1792 / 0.8888 | 9,716.5 / 7,120.5 / 983 / 0.2900 | `results/p2_full_p2more_iou_v2.json` |
+| P2-more + v3 EIoU only (`v3_eiou_only`) | Motion-agnostic EIoU (`e=0.0, 0.35, 0.70`) + Hungarian + online Lab gate (`dh=0.75, dl=0.45`) | 0.3583 / 0.7798 / 0.1654 / 0.8894 | 5,257.0 / 7,488.5 / 945.5 / 0.2940 | `results/tracker_v3_soccer_reid_ablation.json` |
+| P2-more + v3 + MobileNetV3 + GTA-Link | Off-the-shelf `torchvision:mobilenet_v3_large` + GTA-Link (`dh=0.75, cos=0.30, gap=300`) | 0.4144 / 0.7771 / 0.2215 / 0.8893 | 5,225.0 / 7,535.0 / 869.5 / 0.3901 | `results/tracker_v3_1_mobilenet_ablation.json` |
+| P2-more + v3 + Pretrained OSNet + GTA-Link | Pretrained `torchreid:osnet_x1_0` + GTA-Link (`dh=0.75, cos=0.30, gap=300`) | 0.4049 / 0.7779 / 0.2113 / 0.8893 | 5,204.5 / 7,522.0 / 874.0 / 0.3878 | `results/tracker_v3_ablation.json` |
+| P2-more + v3 + **Soccer-Finetuned OSNet** + GTA-Link | `osnet_x1_0` fine-tuned 15 epochs on 4 train clips (88 IDs, Triplet + CE); `dh=0.75, cos=0.30, gap=300` | 0.4943 / 0.7791 / 0.3143 / 0.8896 | 5,219.5 / 7,519.0 / 812.0 / 0.4981 | `results/tracker_v3_soccer_reid_ablation.json` |
+| **Final Frozen Config (Val)** | Same detector & fine-tuned OSNet; `dh=0.78, dl=0.45, cos=0.20, gap=600, official_filter=False` | **0.5011 / 0.7812 / 0.3222 / 0.8898** | **4,615.5 / 7,711.0 / 787.0 / 0.5198** | `results/tracker_v3_soccer_reid_tuning.json` |
 
-With IoU-v2 held fixed, P2-more versus T0 improved mean HOTA by 0.0242 and reduced mean FP from 15,972 to 9,716.5; mean FN also fell from 7,544 to 7,120.5. This is a full-validation comparison, not a held-out test result or a matched comparison with GTATrack. Detector-only full-clip JSON records were not present in the reviewed local changes.
+### Closed Negative Results (Validation)
 
-**Threshold isolation, clip 117093 frames 1000–1999:** the two runs used P2-more weights and changed one threshold from the 0.5/0.5 setting at a time. NMS 0.7 / merge IoU 0.5 gave IoU-tracker HOTA 0.3988, FP 2,831, FN 3,935 and IDSW 507, versus the 0.5/0.5 P2-more window result 0.3959, FP 2,976, FN 3,757 and IDSW 522. Merge IoU 0.7 / NMS 0.5 gave HOTA 0.3953, FP 3,060, FN 3,729 and IDSW 532. Thus the isolated NMS change made a small HOTA gain with more misses; the isolated merge-IoU change did not improve HOTA. Detector-arm and IoU-arm records: `results/p2more_nms07_detector.json`, `results/p2more_nms07_iou.json`, `results/p2more_merge07_detector.json`, `results/p2more_merge07_iou.json`. These are one-window development results.
+- **B3 Threshold isolation (`117093`, frames 1000–1999):** NMS 0.7 / merge IoU 0.5 gave IoU-tracker HOTA 0.3988 vs. 0.3959 (+0.0029, higher FN); merge IoU 0.7 / NMS 0.5 gave 0.3953. Changing both together degraded HOTA (0.3959 to 0.3739). Dropped. Records: `results/p2more_nms07_*.json`, `results/p2more_merge07_*.json`.
+- **C4 Roster-cap confirmation (`p2more_w3`, frames 4000–4999):** Pre-tracking cap `mode=det, K=22` failed confirmation (`results/c4_confirm.json`): FP fell from 1,021 to 282 (-739), raising DetA (0.8374 → 0.8544), but AssA dropped from 0.6280 to 0.5664 (-0.0616) and HOTA fell from 0.7240 to 0.6951 (-0.0290) because high-scoring officials evicted real players mid-track. Dropped.
+- **Track-level Lab Official Filter (`v3_full`):** Dropped ~11,800 real player frames (`FN 7,519 → 19,305`) for only -140 FP (`HOTA 0.4943 → 0.4311`) because fisheye shadows shift real player Lab values more than officials differ from team centroids. Dropped.
 
-**C4 roster-cap tuning:** the frozen protocol is `docs/phase2_amendment_c4_roster.md`. On the two tuning windows (frames 1000–1999), TrackEval selected pre-tracking detection cap `mode=det, K=22`: mean HOTA 0.53924, DetA 0.70568, AssA 0.41855, FP 1,243, FN 2,652, IDSW 254.5. The uncapped `none` candidate scored HOTA 0.53162, DetA 0.69656, AssA 0.41120, FP 1,868, FN 2,338.5, IDSW 270. The selected setting is provisional until the predeclared confirmation window (frames 4000–4999, run `p2more_w3`) is scored; it has not yet passed the confirmation gate. Records: `results/c4_sweep.json`, `results/c4_tuning.json`.
+### **TEST** — Phase II Final Held-Out Evaluation (2026-11-22)
+
+Protocol frozen prior to execution in `docs/phase2_final_config.md` (`git_revision: f20b286070613a4cf66a36ef9082218501581854`, `git_dirty: false`). Run once via `--allow-test`. Disclosure: clip `128057` was previously scored once in Phase I on the frozen Phase I pipeline; clip `132831` (`3840×1504`) is a resolution-shift check. Reserve clips (`118578`, `132877`) remain untouched.
+
+| Clip | Resolution | HOTA | DetA | AssA | LocA | FP | FN | IDSW | IDF1 | Record |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| **`128057`** (matched res) | `4096×1080` | **0.4778** | **0.7743** | **0.2952** | **0.8842** | **3,336** | 8,912 | **689** | **0.4801** | `results/p2_final_test.json` |
+| **`132831`** (resolution shift) | `3840×1504` | **0.3876** | 0.5375 | **0.2802** | **0.8691** | 67,955 | **4,654** | **685** | 0.3618 | `results/p2_final_test.json` |
+| **Test Mean** | — | **0.4327** | 0.6559 | 0.2877 | 0.8767 | 35,645.5 | 6,783.0 | 687.0 | 0.4210 | `results/p2_final_test.json` |
+
+Runtime on Colab Tesla T4 with FP16 + `batch_size=5`: `0.36–0.43 s/frame` on `128057` (`4096×1080`, 5 tiles) and `0.58–0.82 s/frame` on `132831` (`3840×1504`, 8 tiles), down from `~1.1 s/frame` in Phase I.
