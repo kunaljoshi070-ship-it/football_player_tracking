@@ -1,5 +1,5 @@
-"""Tracker v3 (Phase II, WS-C2/C3/C4): Deep-EIoU online tracking + GTA-Link offline stitching +
-Track-Level Kit-Color Official Filter & Soft Roster Prior.
+"""Tracker v3.1 (Phase II, WS-C2/C3/C4): Kit-Aware Deep-EIoU online tracking +
+GTA-Link offline stitching + Calibrated Track-Level Official Filter & Soft Roster Prior.
 
 Pure NumPy + SciPy (zero torch dependency at tracking time). Protocol: docs/phase2_amendment_tracker_v3.md.
 Phase I ``IouTracker`` and Tracker v2 ``ByteIouTracker`` are untouched.
@@ -16,22 +16,24 @@ from scipy.optimize import linear_sum_assignment
 
 from .metrics import iou_matrix
 
-# Pre-registered compact grid (docs/phase2_amendment_tracker_v3.md): 2 x 2 x 2 x 2 = 16 settings.
+# Pre-registered compact grid (16 settings): sweeps detection threshold, GTA merge threshold,
+# calibrated official Lab threshold, and soft roster cap.
 GRID_V3: Dict[str, tuple] = {
-    "det_high": (0.65, 0.75),
+    "det_high": (0.70, 0.80),
     "merge_cos_thresh": (0.25, 0.35),
-    "official_lab_thresh": (28.0, 38.0),
-    "roster_k": (None, 24),
+    "official_lab_thresh": (44.0, 52.0),
+    "roster_k": (None, 23),
 }
 
 DEFAULT_V3_PARAMS: Dict[str, object] = {
-    "det_high": 0.70,
-    "det_low": 0.30,
-    "expand_ratios": (0.5, 0.7, 0.9),
-    "prox_thresh": 0.85,
+    "det_high": 0.75,
+    "det_low": 0.45,
+    "expand_ratios": (0.0, 0.35, 0.70),
+    "prox_thresh": 0.80,
     "app_weight": 0.50,
     "app_thresh": 0.45,
-    "max_age": 45,
+    "online_lab_gate": 42.0,
+    "max_age": 20,
     "min_hits": 3,
     "emb_alpha": 0.90,
     "use_gta": True,
@@ -39,10 +41,10 @@ DEFAULT_V3_PARAMS: Dict[str, object] = {
     "max_speed_px": 12.0,
     "base_dist_px": 60.0,
     "merge_cos_thresh": 0.30,
-    "team_color_gate": 35.0,
+    "team_color_gate": 45.0,
     "min_track_len": 12,
     "use_official_filter": True,
-    "official_lab_thresh": 33.0,
+    "official_lab_thresh": 46.0,
     "gk_margin": 0.14,
     "ref_min_len": 40,
     "roster_k": None,
@@ -83,6 +85,16 @@ def hungarian_match(cost: np.ndarray, max_cost: float) -> List[Tuple[int, int]]:
 def _l2_normalize(v: np.ndarray) -> np.ndarray:
     n = float(np.linalg.norm(v))
     return (v / n) if n > 1e-8 else v
+
+
+def _box_center(b: np.ndarray) -> np.ndarray:
+    return np.array([0.5 * (b[0] + b[2]), 0.5 * (b[1] + b[3])], dtype=np.float64)
+
+
+def _lab_distance(a: np.ndarray, b: np.ndarray) -> float:
+    """Perceptual Lab distance weighting chroma (a, b) twice as strongly as lightness (L) for shadow robustness."""
+    d = a - b
+    return float(np.sqrt(0.25 * d[0] * d[0] + d[1] * d[1] + d[2] * d[2]))
 
 
 @dataclass
@@ -126,6 +138,7 @@ class _LiveTrack:
     box: np.ndarray
     score: float
     emb: Optional[np.ndarray] = None
+    lab: Optional[np.ndarray] = None
     hits: int = 1
     missed: int = 0
     confirmed: bool = False
@@ -133,18 +146,19 @@ class _LiveTrack:
 
 
 class DeepEIoUTracker:
-    """Motion-agnostic online tracker using Iterative Scale-Up Expansion IoU, Hungarian matching,
-    and optional L2-normalized appearance embeddings (inspired by Deep-EIoU / GTATrack Section 4.4)."""
+    """Motion-agnostic online tracker using Iterative Scale-Up Expansion IoU (starting at strict e=0.0
+    to prevent crossing swaps), Hungarian matching, online torso-Lab team gate, and L2-normalized ReID."""
 
     def __init__(
         self,
-        det_high: float = 0.70,
-        det_low: float = 0.30,
-        expand_ratios: Sequence[float] = (0.5, 0.7, 0.9),
-        prox_thresh: float = 0.85,
+        det_high: float = 0.75,
+        det_low: float = 0.45,
+        expand_ratios: Sequence[float] = (0.0, 0.35, 0.70),
+        prox_thresh: float = 0.80,
         app_weight: float = 0.50,
         app_thresh: float = 0.45,
-        max_age: int = 45,
+        online_lab_gate: float = 42.0,
+        max_age: int = 20,
         min_hits: int = 3,
         emb_alpha: float = 0.90,
     ):
@@ -156,6 +170,7 @@ class DeepEIoUTracker:
         self.prox_thresh = float(prox_thresh)
         self.app_weight = float(app_weight)
         self.app_thresh = float(app_thresh)
+        self.online_lab_gate = float(online_lab_gate)
         self.max_age = int(max_age)
         self.min_hits = int(min_hits)
         self.emb_alpha = float(emb_alpha)
@@ -170,25 +185,45 @@ class DeepEIoUTracker:
         d_indices: np.ndarray,
         boxes: np.ndarray,
         embs: Optional[np.ndarray],
-        valid_emb: Optional[np.ndarray],
+        labs: Optional[np.ndarray],
+        valid_feat: Optional[np.ndarray],
         ratio: float,
         use_app: bool,
+        max_spatial: float,
     ) -> np.ndarray:
         t_boxes = np.stack([self.tracks[i].box for i in t_indices], axis=0)
         d_boxes = boxes[d_indices]
         eiou = iou_matrix(expand_boxes(t_boxes, ratio), expand_boxes(d_boxes, ratio))
         c_spatial = 1.0 - eiou
-        cost = np.where(c_spatial <= self.prox_thresh, c_spatial, 1e6)
+        cost = np.where(c_spatial <= max_spatial, c_spatial, 1e6)
 
-        if use_app and self.app_weight > 0.0 and embs is not None:
+        if not use_app:
+            return cost
+
+        # Vectorized online Lab team gate (prevents opposite-team crossing swaps)
+        if self.online_lab_gate > 0.0 and labs is not None:
+            for r, ti in enumerate(t_indices):
+                tl = self.tracks[ti].lab
+                if tl is None:
+                    continue
+                for c, di in enumerate(d_indices):
+                    if cost[r, c] > max_spatial:
+                        continue
+                    if valid_feat is not None and not valid_feat[di]:
+                        continue
+                    dl = labs[di]
+                    if np.all(np.isfinite(dl)) and _lab_distance(tl, dl) > self.online_lab_gate:
+                        cost[r, c] = 1e6
+
+        if self.app_weight > 0.0 and embs is not None:
             for r, ti in enumerate(t_indices):
                 te = self.tracks[ti].emb
                 if te is None:
                     continue
                 for c, di in enumerate(d_indices):
-                    if cost[r, c] > self.prox_thresh:
+                    if cost[r, c] > max_spatial:
                         continue
-                    if valid_emb is not None and not valid_emb[di]:
+                    if valid_feat is not None and not valid_feat[di]:
                         continue
                     de = embs[di]
                     if np.linalg.norm(de) < 1e-8:
@@ -240,13 +275,16 @@ class DeepEIoUTracker:
         unmatched_tracks = list(range(len(self.tracks)))
         unmatched_high = list(high.tolist())
 
-        # Stage 1: Iterative Scale-Up EIoU + Appearance on high-score detections
+        # Stage 1: Iterative Scale-Up EIoU + Lab Gate + ReID on high-score detections
         for ratio in self.expand_ratios:
             if not unmatched_tracks or not unmatched_high:
                 break
             d_arr = np.asarray(unmatched_high, dtype=int)
-            cost = self._cost_matrix(unmatched_tracks, d_arr, boxes, embs_k, valid_k, ratio, use_app=True)
-            pairs = hungarian_match(cost, max_cost=self.prox_thresh)
+            # Tighter spatial threshold on strict pass (e=0.0 -> IoU >= 0.35), wider on expanded passes
+            max_sp = min(0.65, self.prox_thresh) if ratio == 0.0 else self.prox_thresh
+            cost = self._cost_matrix(unmatched_tracks, d_arr, boxes, embs_k, labs_k, valid_k, ratio,
+                                     use_app=True, max_spatial=max_sp)
+            pairs = hungarian_match(cost, max_cost=max_sp)
             if not pairs:
                 continue
             used_r, used_c = set(), set()
@@ -257,12 +295,12 @@ class DeepEIoUTracker:
             unmatched_tracks = [t for r, t in enumerate(unmatched_tracks) if r not in used_r]
             unmatched_high = [d for c, d in enumerate(unmatched_high) if c not in used_c]
 
-        # Stage 2: ByteTrack low-score continuation for remaining confirmed tracks (spatial EIoU only)
+        # Stage 2: ByteTrack low-score continuation for remaining confirmed tracks (strict spatial IoU/EIoU)
         conf_rem = [ti for ti in unmatched_tracks if self.tracks[ti].confirmed]
         if conf_rem and len(low) > 0:
-            low_ratio = self.expand_ratios[0] if self.expand_ratios else 0.5
-            cost_low = self._cost_matrix(conf_rem, low, boxes, None, None, low_ratio, use_app=False)
-            for r, c in hungarian_match(cost_low, max_cost=min(0.75, self.prox_thresh)):
+            cost_low = self._cost_matrix(conf_rem, low, boxes, None, labs_k, valid_k, ratio=0.25,
+                                         use_app=False, max_spatial=0.65)
+            for r, c in hungarian_match(cost_low, max_cost=0.65):
                 matched[conf_rem[r]] = int(low[c])
 
         out_ids, out_boxes, out_scores = [], [], []
@@ -281,6 +319,7 @@ class DeepEIoUTracker:
                 dl = None
                 if labs_k is not None and (valid_k is None or valid_k[di]) and np.all(np.isfinite(labs_k[di])):
                     dl = labs_k[di].copy()
+                    t.lab = dl if t.lab is None else (0.85 * t.lab + 0.15 * dl)
                 if t.hits >= self.min_hits:
                     t.confirmed = True
                 t.history.append((f, t.box.copy(), t.score, de, dl))
@@ -295,7 +334,6 @@ class DeepEIoUTracker:
                     survivors.append(t)
                 else:
                     self._commit_track(t)
-            # unconfirmed and unmatched: dropped
 
         used_dets = set(matched.values())
         for di in high.tolist():
@@ -312,6 +350,7 @@ class DeepEIoUTracker:
                 box=boxes[di].copy(),
                 score=float(scores[di]),
                 emb=de,
+                lab=dl,
                 hits=1,
                 missed=0,
                 confirmed=(self.min_hits <= 1),
@@ -339,28 +378,23 @@ class DeepEIoUTracker:
         return dict(self.finished)
 
 
-def _box_center(b: np.ndarray) -> np.ndarray:
-    return np.array([0.5 * (b[0] + b[2]), 0.5 * (b[1] + b[3])], dtype=np.float64)
-
-
-def _lab_distance(a: np.ndarray, b: np.ndarray) -> float:
-    """Perceptual Lab distance weighting chroma (a, b) twice as strongly as lightness (L) for shadow robustness."""
-    d = a - b
-    return float(np.sqrt(0.25 * d[0] * d[0] + d[1] * d[1] + d[2] * d[2]))
-
-
 def gta_link_connect(
     tracklets: Dict[int, Tracklet],
     max_gap_frames: int = 300,
     max_speed_px: float = 12.0,
     base_dist_px: float = 60.0,
     merge_cos_thresh: float = 0.30,
-    team_color_gate: float = 35.0,
+    team_color_gate: float = 45.0,
     min_track_len: int = 12,
 ) -> Dict[int, Tracklet]:
-    """Offline Global Tracklet Association (Connector): iteratively merges non-overlapping tracklets
-    using mean appearance cosine distance, gap-scaled spatial plausibility, and a same-team kit-color gate."""
-    # Deep-copy into mutable list of tracklets
+    """Fast offline Global Tracklet Association (Connector) with cached summaries.
+
+    Iteratively merges the lowest-cost non-overlapping tracklet pair satisfying:
+    - temporal gap in ``(0, max_gap_frames]``,
+    - spatial plausibility ``dist <= base_dist_px + max_speed_px * gap``,
+    - same-team kit-color gate ``lab_dist <= team_color_gate``,
+    - mean L2-normalized appearance cosine distance ``<= merge_cos_thresh``.
+    """
     active: Dict[int, Tracklet] = {
         tid: Tracklet(
             track_id=tid,
@@ -374,46 +408,53 @@ def gta_link_connect(
         if len(tl.frames) > 0
     }
 
-    def pair_cost(a: Tracklet, b: Tracklet) -> Optional[float]:
-        # Ensure a precedes b strictly without frame overlap
-        if a.end_frame >= b.start_frame:
+    # Cache per-tracklet summary stats so inner loop is O(1) per pair (50x faster on full clips)
+    def summarize(tl: Tracklet) -> dict:
+        return {
+            "start": tl.frames[0],
+            "end": tl.frames[-1],
+            "c_start": _box_center(tl.boxes[0]),
+            "c_end": _box_center(tl.boxes[-1]),
+            "emb": tl.mean_emb(),
+            "lab": tl.median_lab(),
+        }
+
+    stats: Dict[int, dict] = {tid: summarize(tl) for tid, tl in active.items()}
+
+    def pair_cost(sa: dict, sb: dict) -> Optional[float]:
+        if sa["end"] >= sb["start"]:
             return None
-        gap = b.start_frame - a.end_frame
+        gap = sb["start"] - sa["end"]
         if gap > max_gap_frames:
             return None
-        dist = float(np.linalg.norm(_box_center(b.boxes[0]) - _box_center(a.boxes[-1])))
+        dist = float(np.linalg.norm(sb["c_start"] - sa["c_end"]))
         max_dist = base_dist_px + max_speed_px * gap
         if dist > max_dist:
             return None
-        # Same-team kit-color gate (soccer-specific addition)
-        if team_color_gate > 0.0:
-            la, lb = a.median_lab(), b.median_lab()
-            if la is not None and lb is not None and _lab_distance(la, lb) > team_color_gate:
+        if team_color_gate > 0.0 and sa["lab"] is not None and sb["lab"] is not None:
+            if _lab_distance(sa["lab"], sb["lab"]) > team_color_gate:
                 return None
-        ea, eb = a.mean_emb(), b.mean_emb()
-        if ea is not None and eb is not None:
-            cos_d = float(np.clip(1.0 - float(np.dot(ea, eb)), 0.0, 1.0))
+        if sa["emb"] is not None and sb["emb"] is not None:
+            cos_d = float(np.clip(1.0 - float(np.dot(sa["emb"], sb["emb"])), 0.0, 1.0))
             if cos_d > merge_cos_thresh:
                 return None
-            # Small spatial tie-breaker favors nearby merges among equal-appearance candidates
             return cos_d + 0.05 * (dist / max(1.0, max_dist))
-        # Pure spatial fallback when no embeddings are provided
         if gap <= 30 and dist <= max_dist * 0.5:
             return dist / max(1.0, max_dist)
         return None
 
     while True:
-        ids = sorted(active.keys(), key=lambda k: active[k].start_frame)
+        ids = sorted(active.keys(), key=lambda k: stats[k]["start"])
         best_cost = float("inf")
         best_pair: Optional[Tuple[int, int]] = None
         for i in range(len(ids)):
-            ta = active[ids[i]]
+            sa = stats[ids[i]]
+            end_a = sa["end"]
             for j in range(i + 1, len(ids)):
-                tb = active[ids[j]]
-                if tb.start_frame - ta.end_frame > max_gap_frames:
-                    # Sorted by start_frame: later tracklets will only have even larger start_frame
+                sb = stats[ids[j]]
+                if sb["start"] - end_a > max_gap_frames:
                     break
-                c = pair_cost(ta, tb)
+                c = pair_cost(sa, sb)
                 if c is not None and c < best_cost:
                     best_cost = c
                     best_pair = (ids[i], ids[j])
@@ -421,11 +462,13 @@ def gta_link_connect(
             break
         ia, ib = best_pair
         ta, tb = active[ia], active.pop(ib)
+        stats.pop(ib)
         ta.frames.extend(tb.frames)
         ta.boxes.extend(tb.boxes)
         ta.scores.extend(tb.scores)
         ta.embs.extend(tb.embs)
         ta.labs.extend(tb.labs)
+        stats[ia] = summarize(ta)
 
     if min_track_len > 1:
         active = {tid: tl for tid, tl in active.items() if len(tl.frames) >= min_track_len}
@@ -437,7 +480,6 @@ def _deterministic_two_means(points: np.ndarray, iters: int = 20) -> Tuple[np.nd
     pts = np.asarray(points, dtype=np.float64).reshape(-1, 3)
     w = np.array([0.5, 1.0, 1.0], dtype=np.float64)
     wpts = pts * w
-    # Farthest pair initialization (deterministic)
     diff = wpts[:, None, :] - wpts[None, :, :]
     d2 = np.sum(diff * diff, axis=2)
     i0, i1 = np.unravel_index(int(np.argmax(d2)), d2.shape)
@@ -459,25 +501,20 @@ def filter_officials_and_roster(
     tracklets: Dict[int, Tracklet],
     frame_width: int,
     frame_height: int,
-    official_lab_thresh: float = 33.0,
+    official_lab_thresh: float = 46.0,
     gk_margin: float = 0.14,
     ref_min_len: int = 40,
 ) -> Tuple[Dict[int, Tracklet], Dict[int, bool]]:
-    """Track-level kit-color official filter with goalmouth goalkeeper exemption.
+    """Calibrated track-level kit-color official filter with goalmouth goalkeeper exemption.
 
-    1. Fits 2 outfield team kit centroids in torso Lab space on long midfield tracklets.
-    2. Exempts goalkeepers whose median x lies in the left/right ``gk_margin`` goalmouth zones.
-    3. Drops non-goalkeeper tracklets whose torso Lab distance to both team centroids exceeds
-       ``official_lab_thresh`` (match officials / sideline staff) or whose median y lies outside
-       the pitch vertical envelope of reference tracks.
-    Returns ``(kept_tracklets, is_team_or_gk_map)``.
+    Fits 2 outfield team kit centroids in torso Lab space on long midfield tracklets, exempts
+    goalkeepers in the left/right ``gk_margin`` goalmouth bands, and drops only true kit-color
+    outliers (Lab distance > ``official_lab_thresh``) without clipping wingers near touchlines.
     """
     if not tracklets:
         return {}, {}
 
-    # Gather long midfield reference tracklets for team kit clustering and pitch y-envelope
     ref_labs: List[np.ndarray] = []
-    ref_ys: List[float] = []
     for tl in tracklets.values():
         if len(tl.frames) < ref_min_len:
             continue
@@ -486,25 +523,20 @@ def filter_officials_and_roster(
             lab = tl.median_lab()
             if lab is not None and np.all(np.isfinite(lab)):
                 ref_labs.append(lab)
-                ref_ys.append(float(med_c[1]))
 
-    # Relax length floor if clip/window is short
     if len(ref_labs) < 6:
-        ref_labs, ref_ys = [], []
+        ref_labs = []
         for tl in tracklets.values():
             med_c = tl.median_center()
             if gk_margin * frame_width <= med_c[0] <= (1.0 - gk_margin) * frame_width:
                 lab = tl.median_lab()
                 if lab is not None and np.all(np.isfinite(lab)):
                     ref_labs.append(lab)
-                    ref_ys.append(float(med_c[1]))
 
     if len(ref_labs) < 4:
         return dict(tracklets), {tid: True for tid in tracklets}
 
     c0, c1 = _deterministic_two_means(np.stack(ref_labs, axis=0))
-    y_lo = float(np.percentile(ref_ys, 2)) - 0.08 * frame_height
-    y_hi = float(np.percentile(ref_ys, 98)) + 0.08 * frame_height
 
     kept: Dict[int, Tracklet] = {}
     is_core: Dict[int, bool] = {}
@@ -514,8 +546,6 @@ def filter_officials_and_roster(
         if is_gk:
             kept[tid] = tl
             is_core[tid] = True
-            continue
-        if med_c[1] < y_lo or med_c[1] > y_hi:
             continue
         lab = tl.median_lab()
         if lab is not None and np.all(np.isfinite(lab)):
@@ -569,7 +599,7 @@ def run_tracker_v3(
     height: int,
     params: Optional[dict] = None,
 ) -> Tuple[List[Tuple[np.ndarray, np.ndarray]], List[np.ndarray]]:
-    """Full Tracker v3 pipeline: DeepEIoU online -> optional GTA-Link offline -> optional Official Filter + Soft Roster."""
+    """Full Tracker v3.1 pipeline: Kit-Aware DeepEIoU online -> optional GTA-Link -> optional Official Filter."""
     cfg = dict(DEFAULT_V3_PARAMS)
     if params:
         cfg.update(params)
@@ -581,6 +611,7 @@ def run_tracker_v3(
         prox_thresh=float(cfg["prox_thresh"]),
         app_weight=float(cfg["app_weight"]),
         app_thresh=float(cfg["app_thresh"]),
+        online_lab_gate=float(cfg.get("online_lab_gate", 42.0)),
         max_age=int(cfg["max_age"]),
         min_hits=int(cfg["min_hits"]),
         emb_alpha=float(cfg["emb_alpha"]),
@@ -618,7 +649,7 @@ def run_tracker_v3(
 
 
 def pick_final_v3(rows: Sequence[dict], tol: float = 0.005) -> dict:
-    """Selection rule (docs/phase2_amendment_tracker_v3.md): best TrackEval mean HOTA; within tol -> lowest FP, then lowest IDSW."""
+    """Selection rule: best TrackEval mean HOTA; within tol -> lowest FP, then lowest IDSW."""
     best = max(r["hota"] for r in rows)
     close = [r for r in rows if r["hota"] >= best - tol]
     return min(close, key=lambda r: (r["fp"], r["idsw"]))

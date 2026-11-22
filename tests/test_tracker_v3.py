@@ -1,4 +1,4 @@
-"""Unit tests for Tracker v3 (Deep-EIoU, GTA-Link, Kit-Color Official Filter) and feature chunking."""
+"""Unit tests for Tracker v3.1 (Kit-Aware Deep-EIoU, GTA-Link, Calibrated Official Filter) and feature chunking."""
 
 from __future__ import annotations
 
@@ -59,6 +59,19 @@ class TestTrackerV3(unittest.TestCase):
         ids, _, _ = tr.update(box_back, np.array([0.9]), embs=emb[None, :])
         self.assertEqual(list(ids), [orig_id])
 
+    def test_online_lab_gate_prevents_opposite_team_swap(self):
+        """When an opposite-team player stands at the exact same location, online Lab gate blocks a swap."""
+        tr = DeepEIoUTracker(det_high=0.6, det_low=0.3, max_age=10, min_hits=2, app_weight=0.0, online_lab_gate=40.0)
+        white_lab = np.array([[200.0, 130.0, 124.0]])
+        blue_lab = np.array([[100.0, 138.0, 93.0]])
+        box = np.array([[500.0, 400.0, 524.0, 448.0]])
+        for _ in range(3):
+            ids, _, _ = tr.update(box, np.array([0.95]), labs=white_lab)
+        white_id = int(ids[0])
+        # Next frame: blue player appears at exact same box (white occluded) -> must NOT steal white_id
+        ids_b, _, _ = tr.update(box, np.array([0.95]), labs=blue_lab)
+        self.assertNotIn(white_id, list(ids_b))
+
     def test_gta_link_merges_same_player_and_respects_gates(self):
         e1 = np.array([1.0, 0.0, 0.0, 0.0])
         e2 = np.array([0.0, 1.0, 0.0, 0.0])
@@ -100,15 +113,11 @@ class TestTrackerV3(unittest.TestCase):
         tid += 1
         ref_id = tid
         tracklets[tid] = Tracklet(tid, list(range(60)), [np.array([2000.0, 490.0, 2024.0, 540.0])] * 60, [0.99] * 60, [], [ref_kit] * 60)
-        tid += 1
-        coach_id = tid
-        tracklets[tid] = Tracklet(tid, list(range(60)), [np.array([2000.0, 50.0, 2024.0, 100.0])] * 60, [0.95] * 60, [], [team_a] * 60)
 
-        kept, _ = filter_officials_and_roster(tracklets, W, H, official_lab_thresh=30.0, gk_margin=0.14, ref_min_len=30)
+        kept, _ = filter_officials_and_roster(tracklets, W, H, official_lab_thresh=45.0, gk_margin=0.14, ref_min_len=30)
         self.assertIn(gk_left_id, kept)
         self.assertIn(gk_right_id, kept)
         self.assertNotIn(ref_id, kept)
-        self.assertNotIn(coach_id, kept)
         self.assertEqual(len(kept), 22)
 
     def test_torso_lab_masks_green_pitch_and_feature_chunk_roundtrip(self):
