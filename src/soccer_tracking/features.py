@@ -1,15 +1,8 @@
-"""Chunked appearance (OSNet / torchvision) and green-masked torso Lab color feature extraction (Phase II, WS-C2).
+"""Chunked appearance (OSNet / fine-tuned OSNet / torchvision) and green-masked torso Lab color extraction (Phase II, WS-C2).
 
 Extracts per-detection embeddings and torso color vectors directly from cached detection chunks
 (``<clip>_c<start>.npz``) in a single sequential video decode pass per missing chunk, saving resumable
 ``<clip>_f<start>.npz`` files next to the detections.
-
-Command line (run on Colab T4, ~15-25 min for both full validation clips)::
-
-    PYTHONPATH=src python -m soccer_tracking.features extract \
-        --role val --run p2more_full \
-        --det-root /content/drive/MyDrive/soccer_runs/detections_p2 \
-        --backbone auto --min-score 0.25 --batch-size 256
 """
 
 from __future__ import annotations
@@ -65,12 +58,7 @@ def save_feature_chunk(det_dir: Path, clip_id: str, start: int, frames, det_indi
 
 
 def extract_torso_lab(image_rgb: np.ndarray, box_xyxy: Sequence[float]) -> np.ndarray:
-    """Median CIE-Lab color of the central torso region of ``box_xyxy`` with pitch-green pixels masked out.
-
-    Torso sub-box: middle 40% width (0.30..0.70), upper-middle 37% height (0.18..0.55).
-    Returns float32 shape ``(3,)`` in OpenCV Lab scale ([0..255] per channel); falls back to unmasked median
-    if >85% of pixels are green, or ``[0, 128, 128]`` if the crop is empty.
-    """
+    """Median CIE-Lab color of the central torso region of ``box_xyxy`` with pitch-green pixels masked out."""
     fh, fw = image_rgb.shape[:2]
     x1, y1, x2, y2 = [float(v) for v in box_xyxy]
     bw, bh = max(1.0, x2 - x1), max(1.0, y2 - y1)
@@ -82,14 +70,10 @@ def extract_torso_lab(image_rgb: np.ndarray, box_xyxy: Sequence[float]) -> np.nd
     if crop_rgb.size == 0:
         return np.array([0.0, 128.0, 128.0], dtype=np.float32)
     hsv = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2HSV)
-    # Pitch turf in OpenCV HSV (H in [0, 179]): green hue ~32..92 with moderate-to-high saturation
     green = (hsv[:, :, 0] >= 32) & (hsv[:, :, 0] <= 92) & (hsv[:, :, 1] >= 45) & (hsv[:, :, 2] >= 35)
     lab = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2LAB).reshape(-1, 3)
     non_green = ~green.reshape(-1)
-    if int(non_green.sum()) >= max(4, int(0.15 * len(non_green))):
-        pixels = lab[non_green]
-    else:
-        pixels = lab
+    pixels = lab[non_green] if int(non_green.sum()) >= max(4, int(0.15 * len(non_green))) else lab
     return np.median(pixels, axis=0).astype(np.float32)
 
 
@@ -107,33 +91,38 @@ def crop_box_rgb(image_rgb: np.ndarray, box_xyxy: Sequence[float], out_wh: Tuple
 
 
 class AppearanceExtractor:
-    """L2-normalized ReID embedding extractor: OSNet (torchreid) with zero-install torchvision fallback."""
+    """L2-normalized ReID embedding extractor: OSNet (pretrained or fine-tuned) with torchvision fallback."""
 
-    def __init__(self, backbone: str = "auto", device: str = "auto"):
+    def __init__(self, backbone: str = "auto", device: str = "auto", reid_weights: Optional[str] = None):
         import torch
 
         self.device = torch.device(
             "cuda" if device == "auto" and torch.cuda.is_available() else ("cpu" if device == "auto" else device)
         )
         self.backbone_used = ""
+        self.reid_weights = str(reid_weights) if reid_weights else None
         self.emb_dim = 0
         self._mode = ""
         self._model = None
-        self._input_wh = (128, 256)
 
         if backbone in ("auto", "osnet"):
             try:
                 from torchreid.utils import FeatureExtractor  # type: ignore
 
-                self._model = FeatureExtractor(model_name="osnet_x1_0", device=str(self.device))
-                self.backbone_used = "torchreid:osnet_x1_0"
+                kwargs = {"model_name": "osnet_x1_0", "device": str(self.device)}
+                if reid_weights:
+                    if not Path(reid_weights).is_file():
+                        raise FileNotFoundError(f"ReID weights not found: {reid_weights}")
+                    kwargs["model_path"] = str(reid_weights)
+                self._model = FeatureExtractor(**kwargs)
+                self.backbone_used = f"torchreid:osnet_x1_0{'(finetuned)' if reid_weights else ''}"
                 self.emb_dim = 512
                 self._mode = "torchreid"
                 return
             except Exception as exc:
                 if backbone == "osnet":
                     raise ImportError(
-                        f"Requested --backbone osnet but torchreid failed ({exc}); install torchreid or use --backbone auto"
+                        f"Requested --backbone osnet but torchreid failed ({exc}); put deep-person-reid on PYTHONPATH"
                     ) from exc
 
         if backbone in ("auto", "mobilenet_v3_large", "resnet50"):
@@ -170,14 +159,13 @@ class AppearanceExtractor:
             for i in range(0, len(crops_rgb), batch_size):
                 chunk = crops_rgb[i:i + batch_size]
                 if self._mode == "torchreid":
-                    # torchreid FeatureExtractor accepts list of HWC RGB uint8 numpy arrays
                     feats = self._model(list(chunk))
                     if hasattr(feats, "detach"):
                         feats = feats.detach().float().cpu().numpy()
                     else:
                         feats = np.asarray(feats, dtype=np.float32)
                 else:
-                    arr = np.stack(chunk, axis=0)  # (B, H, W, 3)
+                    arr = np.stack(chunk, axis=0)
                     x = torch.from_numpy(arr).permute(0, 3, 1, 2).to(self.device, non_blocking=True).float().div_(255.0)
                     x = (x - self._mean) / self._std
                     with torch.amp.autocast("cuda", dtype=torch.float16, enabled=amp_enabled):
@@ -190,12 +178,7 @@ class AppearanceExtractor:
 
 def assemble_features(det_dir: Path, clip_id: str, plan: Sequence[Tuple[int, int]],
                       dets: Sequence[Tuple[np.ndarray, np.ndarray]]) -> Tuple[List[Dict[str, np.ndarray]], int]:
-    """Load and align extracted features to per-frame ``dets``.
-
-    Returns ``(per_frame_feats, emb_dim)`` where ``per_frame_feats[f]`` is
-    ``{"emb": float32 (N_f, D), "torso_lab": float32 (N_f, 3), "valid": bool (N_f,)}`` matching ``dets[f]``.
-    Detections below ``min_score`` during extraction have ``valid=False`` and zero embedding.
-    """
+    """Load and align extracted features to per-frame ``dets``."""
     gone = missing_feature_chunks(det_dir, clip_id, plan)
     if gone:
         raise FileNotFoundError(
@@ -295,7 +278,7 @@ def cmd_extract(args) -> None:
     ids = select_clips(args.role, args.clip, args.allow_test, args.allow_reserve)
     by_id = {c.clip_id: c for c in load_manifest(args.manifest)}
     det_dir = Path(args.det_root) / args.run
-    extractor = AppearanceExtractor(backbone=args.backbone, device=args.device)
+    extractor = AppearanceExtractor(backbone=args.backbone, device=args.device, reid_weights=args.reid_weights)
     for cid in ids:
         pf = plan_file(det_dir, cid)
         if not pf.is_file():
@@ -308,6 +291,7 @@ def cmd_extract(args) -> None:
             {
                 "backbone_requested": args.backbone,
                 "backbone_used": extractor.backbone_used,
+                "reid_weights": extractor.reid_weights,
                 "emb_dim": extractor.emb_dim,
                 "min_score": args.min_score,
                 "batch_size": args.batch_size,
@@ -336,6 +320,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--allow-test", action="store_true")
     e.add_argument("--allow-reserve", action="store_true")
     e.add_argument("--backbone", choices=("auto", "osnet", "mobilenet_v3_large", "resnet50"), default="auto")
+    e.add_argument("--reid-weights", default=None, help="optional fine-tuned OSNet checkpoint (.pt)")
     e.add_argument("--min-score", type=float, default=0.25)
     e.add_argument("--batch-size", type=int, default=256)
     e.add_argument("--device", default="auto")

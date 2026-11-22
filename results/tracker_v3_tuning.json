@@ -1,0 +1,175 @@
+{
+  "protocol": "docs/phase2_amendment_tracker_v3.md",
+  "tracker": "DeepEIoU+GTALink+KitColorFilter",
+  "chosen": {
+    "det_high": 0.8,
+    "det_low": 0.45,
+    "expand_ratios": [
+      0.0,
+      0.35,
+      0.7
+    ],
+    "prox_thresh": 0.8,
+    "app_weight": 0.5,
+    "app_thresh": 0.45,
+    "online_lab_gate": 42.0,
+    "max_age": 20,
+    "min_hits": 3,
+    "emb_alpha": 0.9,
+    "use_gta": true,
+    "max_gap_frames": 300,
+    "max_speed_px": 12.0,
+    "base_dist_px": 60.0,
+    "merge_cos_thresh": 0.25,
+    "team_color_gate": 45.0,
+    "min_track_len": 12,
+    "use_official_filter": true,
+    "official_lab_thresh": 44.0,
+    "gk_margin": 0.14,
+    "ref_min_len": 40,
+    "roster_k": null
+  },
+  "tuning_run": "p2more_full",
+  "sequences": {
+    "117093_0_5976": {
+      "clip_id": "117093",
+      "start": 0,
+      "end": 5976
+    },
+    "128058_0_5981": {
+      "clip_id": "128058",
+      "start": 0,
+      "end": 5981
+    }
+  },
+  "rescored_top_k": [
+    {
+      "params": {
+        "det_high": 0.8,
+        "det_low": 0.45,
+        "expand_ratios": [
+          0.0,
+          0.35,
+          0.7
+        ],
+        "prox_thresh": 0.8,
+        "app_weight": 0.5,
+        "app_thresh": 0.45,
+        "online_lab_gate": 42.0,
+        "max_age": 20,
+        "min_hits": 3,
+        "emb_alpha": 0.9,
+        "use_gta": true,
+        "max_gap_frames": 300,
+        "max_speed_px": 12.0,
+        "base_dist_px": 60.0,
+        "merge_cos_thresh": 0.25,
+        "team_color_gate": 45.0,
+        "min_track_len": 12,
+        "use_official_filter": true,
+        "official_lab_thresh": 44.0,
+        "gk_margin": 0.14,
+        "ref_min_len": 40,
+        "roster_k": null
+      },
+      "hota": 0.3493474683937343,
+      "deta": 0.7093596041190697,
+      "assa": 0.17302060920220802,
+      "loca": 0.888955065138413,
+      "fp": 3877.0,
+      "fn": 19644.5,
+      "idsw": 781.5,
+      "idf1": 0.3201888828624191,
+      "reference_hota": 0.3493485668263634
+    },
+    {
+      "params": {
+        "det_high": 0.8,
+        "det_low": 0.45,
+        "expand_ratios": [
+          0.0,
+          0.35,
+          0.7
+        ],
+        "prox_thresh": 0.8,
+        "app_weight": 0.5,
+        "app_thresh": 0.45,
+        "online_lab_gate": 42.0,
+        "max_age": 20,
+        "min_hits": 3,
+        "emb_alpha": 0.9,
+        "use_gta": true,
+        "max_gap_frames": 300,
+        "max_speed_px": 12.0,
+        "base_dist_px": 60.0,
+        "merge_cos_thresh": 0.25,
+        "team_color_gate": 45.0,
+        "min_track_len": 12,
+        "use_official_filter": true,
+        "official_lab_thresh": 44.0,
+        "gk_margin": 0.14,
+        "ref_min_len": 40,
+        "roster_k": 23
+      },
+      "hota": 0.3493471247434202,
+      "deta": 0.709356319658732,
+      "assa": 0.17302113939878608,
+      "loca": 0.8889548872714207,
+      "fp": 3877.0,
+      "fn": 19645.0,
+      "idsw": 781.5,
+      "idf1": 0.3201895655768555,
+      "reference_hota": 0.3493482231772106
+    },
+    {
+      "params": {
+        "det_high": 0.8,
+        "det_low": 0.45,
+        "expand_ratios": [
+          0.0,
+          0.35,
+          0.7
+        ],
+        "prox_thresh": 0.8,
+        "app_weight": 0.5,
+        "app_thresh": 0.45,
+        "online_lab_gate": 42.0,
+        "max_age": 20,
+        "min_hits": 3,
+        "emb_alpha": 0.9,
+        "use_gta": true,
+        "max_gap_frames": 300,
+        "max_speed_px": 12.0,
+        "base_dist_px": 60.0,
+        "merge_cos_thresh": 0.35,
+        "team_color_gate": 45.0,
+        "min_track_len": 12,
+        "use_official_filter": true,
+        "official_lab_thresh": 44.0,
+        "gk_margin": 0.14,
+        "ref_min_len": 40,
+        "roster_k": null
+      },
+      "hota": 0.3493460619926988,
+      "deta": 0.7093825105117089,
+      "assa": 0.17301331865315825,
+      "loca": 0.8889533946833778,
+      "fp": 3877.0,
+      "fn": 19640.5,
+      "idsw": 782.0,
+      "idf1": 0.32018342134382793,
+      "reference_hota": 0.349347160421622
+    }
+  ],
+  "rule": "best TrackEval mean HOTA; within 0.005 -> lowest FP, then lowest IDSW",
+  "environment": {
+    "utc": "2026-11-22T07:15:39+00:00",
+    "python": "3.13.18",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39",
+    "git_revision": "24ae5cf98e7b9c58ce1c8c3aff762a2f1cca7380",
+    "git_dirty": false,
+    "manifest_sha256": "fb636c35a20ad869285ed669bdd95ac02e55c49cc89b634208027dc34a7d10c3",
+    "command": "/content/repo/src/soccer_tracking/tune_tracker_v3.py finalize --sweep /content/drive/MyDrive/soccer_runs/tracker_v3_sweep.json --out /content/drive/MyDrive/soccer_runs/tracker_v3_tuning.json"
+  }
+}
